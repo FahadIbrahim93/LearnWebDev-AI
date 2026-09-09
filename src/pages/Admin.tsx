@@ -7,7 +7,9 @@ import {
   BadgeDollarSign,
   BookLock,
   CalendarClock,
+  Copy,
   LayoutDashboard,
+  Mail,
   ShieldCheck,
   Users,
 } from "lucide-react";
@@ -40,7 +42,7 @@ export default function Admin() {
   const pending = useQuery(api.admin.listPendingPosts, {});
   const orders = useQuery(api.admin.listAllOrders, {});
   const lessons = useQuery(api.admin.listAllLessons, {});
-  const bookings = useQuery(api.bookings.listAllBookings, {});
+  const bookings = useQuery(api.bookings.listAllBookingsWithUsers, {});
   const waitlist = useQuery(api.waitlist.listWaitlist, {});
   const moderate = useMutation(api.admin.moderatePost);
   const claimAdmin = useMutation(api.admin.claimAdmin);
@@ -48,7 +50,10 @@ export default function Admin() {
   const deleteLesson = useMutation(api.admin.deleteLesson);
   const publishLesson = useMutation(api.admin.publishLesson);
 
-  const [tab, setTab] = useState<"overview" | "lessons" | "orders" | "sessions" | "moderation">("overview");
+  const [tab, setTab] = useState<
+    "overview" | "lessons" | "orders" | "sessions" | "moderation" | "waitlist"
+  >("overview");
+  const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState<
     | (typeof EMPTY_LESSON & { id?: Id<"lessons">; topics: string })
     | null
@@ -118,6 +123,7 @@ export default function Admin() {
               ["orders", "Orders", BadgeDollarSign],
               ["sessions", "Sessions", CalendarClock],
               ["moderation", "Moderation", Users],
+              ["waitlist", "Waitlist", Mail],
             ] as const
           ).map(([id, label, Icon]) => (
             <button
@@ -406,7 +412,15 @@ export default function Admin() {
                       {b.status}
                     </NbTag>
                   </div>
-                  <p className="mt-1 text-sm">Module: {b.lessonSlug}</p>
+                  <p className="mt-1 text-sm">
+                    Module: {b.lessonSlug}
+                    {(b.studentName || b.studentEmail) && (
+                      <span className="text-muted-foreground">
+                        {" "}· {b.studentName ?? "Student"}
+                        {b.studentEmail ? ` (${b.studentEmail})` : ""}
+                      </span>
+                    )}
+                  </p>
                   {b.note && (
                     <p className="nb-border mt-2 bg-background px-2.5 py-1.5 text-sm">
                       <span className="font-bold">Student note:</span> {b.note}
@@ -414,6 +428,58 @@ export default function Admin() {
                   )}
                 </NbBox>
               ))}
+          </div>
+        )}
+
+        {/* Waitlist */}
+        {tab === "waitlist" && (
+          <div className="mt-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm text-muted-foreground">
+                {(waitlist ?? []).length} people waiting. Copy the list into
+                your email tool when you launch.
+              </p>
+              <NbButton
+                variant="ghost"
+                className="px-2.5 py-1.5 text-[10px]"
+                disabled={(waitlist ?? []).length === 0}
+                onClick={async () => {
+                  const emails = (waitlist ?? [])
+                    .sort((a, b) => a.createdAt - b.createdAt)
+                    .map((w) => w.email)
+                    .join(", ");
+                  try {
+                    await navigator.clipboard.writeText(emails);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  } catch {
+                    setCopied(false);
+                  }
+                }}
+              >
+                <Copy className="size-3" /> {copied ? "Copied!" : "Copy all emails"}
+              </NbButton>
+            </div>
+            <div className="mt-3 space-y-1.5">
+              {(waitlist ?? [])
+                .sort((a, b) => b.createdAt - a.createdAt)
+                .map((w) => (
+                  <NbBox
+                    key={w._id}
+                    className="flex items-center justify-between bg-card px-4 py-2"
+                  >
+                    <p className="font-mono text-sm">{w.email}</p>
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      {new Date(w.createdAt).toLocaleDateString()}
+                    </p>
+                  </NbBox>
+                ))}
+              {(waitlist ?? []).length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Nobody yet — the landing page form fills this list.
+                </p>
+              )}
+            </div>
           </div>
         )}
 

@@ -1,3 +1,4 @@
+import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
@@ -20,6 +21,7 @@ export const joinWaitlist = mutation({
   },
 });
 
+/** Public: count only — no personal data leaves the server. */
 export const countWaitlist = query({
   args: {},
   handler: async (ctx) => {
@@ -27,9 +29,13 @@ export const countWaitlist = query({
   },
 });
 
+/** Admin only: full list with emails + signup dates. */
 export const listWaitlist = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    const me = userId ? await ctx.db.get(userId) : null;
+    if (!me?.isAdmin) return [];
     return await ctx.db.query("waitlist").collect();
   },
 });

@@ -34,6 +34,12 @@ Built as a real, sellable product: catalog + checkout + bookings + community
 - **Checkout** — real Stripe Checkout when keys are configured; a clearly
   labeled demo checkout (no money moves) when they aren't.
 - **1:1 session booking** — pick a day, see live slot availability, confirm.
+  A confirmation email is scheduled automatically on booking.
+- **Transactional email (Resend)** — booking confirmations and purchase
+  receipts are sent through Resend's API. Without a `RESEND_API_KEY` the
+  sends are silent no-ops (demo mode); paste the key and they become real
+  emails. For production deliverability, verify your domain in Resend and
+  update the `FROM` address in `src/convex/emails.ts`.
 - **Student showcase** — submit your build for review, browse approved
   projects, and comment on classmates' work.
 - **Waitlist** — a pre-launch email capture on the landing page, stored in
@@ -51,7 +57,8 @@ Built as a real, sellable product: catalog + checkout + bookings + community
 - Revenue, order, and waitlist overview
 - Full lesson CRUD: create, edit, publish/unpublish, delete modules
 - Order log
-- Session bookings with student notes
+- Session bookings with student name, email, and private notes
+- Waitlist viewer with one-click copy-all of collected emails
 - Showcase moderation (approve/reject submissions)
 
 ## Tech stack
@@ -83,6 +90,15 @@ manually in this environment.
    `https://<your-convex-domain>/stripe_webhook` listening for
    `checkout.session.completed`, and paste the signing secret as
    `STRIPE_WEBHOOK_SECRET`.
+
+## Turning on real emails
+1. Create a Resend account and grab an API key.
+2. Add `RESEND_API_KEY` via the project's Keys/API keys UI.
+3. (Recommended) Verify your sending domain in Resend and change the `FROM`
+   constant in `src/convex/emails.ts` to your domain.
+
+Booking confirmations and purchase receipts start flowing immediately —
+no other code changes needed.
 
 Until keys exist, checkout runs in demo mode: orders are created and marked
 paid without charging anyone, so the whole flow is demo-able safely.

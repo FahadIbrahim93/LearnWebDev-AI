@@ -30,6 +30,9 @@ export const getMyRole = query({
 export const listPendingPosts = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    const me = userId ? await ctx.db.get(userId) : null;
+    if (!me?.isAdmin) return [];
     return await ctx.db
       .query("showcase")
       .filter((q) => q.eq(q.field("approved"), false))
@@ -40,6 +43,9 @@ export const listPendingPosts = query({
 export const listAllOrders = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    const me = userId ? await ctx.db.get(userId) : null;
+    if (!me?.isAdmin) return [];
     return await ctx.db.query("orders").collect();
   },
 });
@@ -47,7 +53,21 @@ export const listAllOrders = query({
 export const listAllLessons = query({
   args: {},
   handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    const me = userId ? await ctx.db.get(userId) : null;
+    if (!me?.isAdmin) return [];
     return await ctx.db.query("lessons").collect();
+  },
+});
+
+/** Waitlist with signup dates (admin only). */
+export const listWaitlist = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    const me = userId ? await ctx.db.get(userId) : null;
+    if (!me?.isAdmin) return [];
+    return await ctx.db.query("waitlist").collect();
   },
 });
 

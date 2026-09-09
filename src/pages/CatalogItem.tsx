@@ -132,13 +132,18 @@ export default function CatalogItem() {
                 </p>
 
                 {owned || checkoutState === "paid" ? (
-                  <NbRouterLink
-                    to={`/learn/${lesson.slug}`}
-                    variant="success"
-                    className="mt-4 w-full"
-                  >
-                    <BookOpenCheck className="size-4" /> Start the course
-                  </NbRouterLink>
+                  <>
+                    <NbRouterLink
+                      to={`/learn/${lesson.slug}`}
+                      variant="success"
+                      className="mt-4 w-full"
+                    >
+                      <BookOpenCheck className="size-4" /> Start the course
+                    </NbRouterLink>
+                    <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                      Receipt sent to your email.
+                    </p>
+                  </>
                 ) : lesson.isFree ? (
                   <NbRouterLink
                     to={`/learn/${lesson.slug}`}

@@ -79,8 +79,8 @@ export default function Book() {
             <h1 className="mt-3 text-2xl font-bold uppercase">You're booked!</h1>
             <p className="mt-2 text-sm leading-relaxed">
               Your 1:1 session for <strong>{lesson?.title ?? "this module"}</strong> is
-              confirmed for {prettyDate(date)} at {time}. A reminder will
-              appear in your dashboard.
+              confirmed for {prettyDate(date)} at {time}. A confirmation email
+              is on its way, and the session appears in your dashboard.
             </p>
             <div className="mt-5 flex justify-center gap-2">
               <NbRouterLink to="/dashboard" variant="primary">

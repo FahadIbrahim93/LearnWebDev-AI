@@ -1,6 +1,11 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
-import { internalMutation, mutation, query } from "./_generated/server";
+import {
+  internalMutation,
+  mutation,
+  query,
+} from "./_generated/server";
+import { internal } from "./_generated/api";
 
 /* ------------------------------------------------------------------ */
 /* Public catalog queries                                              */
@@ -107,7 +112,46 @@ export const completeDemoCheckout = mutation({
       status: "paid",
       provider: "demo",
     });
+
+    // Receipt email — detached, no-op without RESEND_API_KEY.
+    await ctx.scheduler.runAfter(0, internal.catalog.sendOrderReceipt, {
+      orderId: args.orderId,
+    });
+
     return args.orderId;
+  },
+});
+
+/** Sends the receipt for a paid order (used after demo or Stripe payment). */
+export const sendOrderReceipt = internalMutation({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.status !== "paid") return;
+    const user = await ctx.db.get(order.userId);
+    const email = user?.email;
+    if (!email) return;
+    const lesson = await ctx.db
+      .query("lessons")
+      .withIndex("by_slug", (q) => q.eq("slug", order.lessonSlug))
+      .unique();
+    await ctx.scheduler.runAfter(0, internal.emails.sendEmail, {
+      to: email,
+      subject: `Your receipt — ${lesson?.title ?? order.lessonSlug}`,
+      text: [
+        `Hi${user?.name ? ` ${user.name}` : ""},`,
+        ``,
+        `Thanks for your purchase!`,
+        ``,
+        `Module: ${lesson?.title ?? order.lessonSlug}`,
+        `Amount: $${(order.amountCents / 100).toFixed(2)} (${order.provider ?? "demo"})`,
+        ``,
+        `Your module is unlocked forever: <site>/learn/${order.lessonSlug}`,
+        `Questions? Just reply to this email.`,
+        ``,
+        `— Web Development with AI`,
+      ].join("\n"),
+    });
   },
 });
 
@@ -154,6 +198,10 @@ export const markOrderPaidById = internalMutation({
       status: "paid",
       provider: "stripe",
       stripeSessionId: args.sessionId,
+    });
+    // Receipt email — detached, no-op without RESEND_API_KEY.
+    await ctx.scheduler.runAfter(0, internal.catalog.sendOrderReceipt, {
+      orderId: args.orderId,
     });
   },
 });
