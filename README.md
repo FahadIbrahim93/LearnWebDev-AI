@@ -32,7 +32,9 @@ Built as a real, sellable product: catalog + checkout + bookings + community
   paid modules now teach the same way: every concept is followed by a thing
   to *do*, not just read.
 - **Course catalog** — searchable, filterable modules with detail pages,
-  one-time pricing, and free/paid tiers.
+  one-time pricing, and free/paid tiers. Each detail page includes a "peek
+  inside" preview: the real section titles with their hands-on challenges,
+  so buyers can judge the teaching before paying.
 - **Checkout** — real Stripe Checkout when keys are configured; a clearly
   labeled demo checkout (no money moves) when they aren't.
 - **1:1 session booking** — pick a day, see live slot availability, confirm.
@@ -65,8 +67,9 @@ Built as a real, sellable product: catalog + checkout + bookings + community
   totals. Computed live from your own data; the honest caveat about guest
   learners is printed right on the page.
 - Full lesson CRUD: create, edit, publish/unpublish, delete modules
-- Order log
-- Session bookings with student name, email, and private notes
+- Order log with buyer name + email (refund/support follow-ups)
+- Session bookings with student name, email, private notes — and owner
+  controls to cancel a session
 - Waitlist viewer with one-click copy-all of collected emails
 - Showcase moderation (approve/reject submissions)
 

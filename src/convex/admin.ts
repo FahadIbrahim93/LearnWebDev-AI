@@ -46,7 +46,17 @@ export const listAllOrders = query({
     const userId = await getAuthUserId(ctx);
     const me = userId ? await ctx.db.get(userId) : null;
     if (!me?.isAdmin) return [];
-    return await ctx.db.query("orders").collect();
+    const orders = await ctx.db.query("orders").collect();
+    const users = await ctx.db.query("users").collect();
+    const byId = new Map(users.map((u) => [u._id, u] as const));
+    return orders.map((o) => {
+      const u = byId.get(o.userId);
+      return {
+        ...o,
+        buyerName: u?.name ?? null,
+        buyerEmail: u?.email ?? null,
+      };
+    });
   },
 });
 
@@ -141,5 +151,19 @@ export const publishLesson = mutation({
     const me = userId ? await ctx.db.get(userId) : null;
     if (!me?.isAdmin) throw new Error("Admins only.");
     await ctx.db.patch(args.id, { isPublished: args.isPublished });
+  },
+});
+
+/** Owner updates a booking's status (cancel a session, mark it completed). */
+export const updateBookingStatus = mutation({
+  args: {
+    bookingId: v.id("bookings"),
+    status: v.union(v.literal("confirmed"), v.literal("cancelled")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    const me = userId ? await ctx.db.get(userId) : null;
+    if (!me?.isAdmin) throw new Error("Admins only.");
+    await ctx.db.patch(args.bookingId, { status: args.status });
   },
 });

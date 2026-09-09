@@ -9,6 +9,8 @@ import { BookOpenCheck, CalendarClock, Check, ShoppingCart } from "lucide-react"
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
+import { getContentFor } from "@/convex/moduleContent";
+import { NbDisclosure } from "@/components/nb";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
@@ -16,6 +18,7 @@ import { usePageTitle } from "@/hooks/use-page-title";
 export default function CatalogItem() {
   const { slug = "" } = useParams();
   usePageTitle("Module");
+  const content = getContentFor(slug);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const lesson = useQuery(api.catalog.getLesson, { slug });
@@ -143,6 +146,35 @@ export default function CatalogItem() {
                   </div>
                 ))}
               </div>
+
+              {/* Real course-content preview — sell the teaching, not a topic list. */}
+              {content && (
+                <>
+                  <h2 className="mt-8 text-xl font-bold uppercase tracking-tight">
+                    Peek inside the course
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {content.sections.length} sections · every one ends in a
+                    hands-on challenge you must solve to move on.
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {content.sections.map((sec, i) => (
+                      <NbDisclosure
+                        key={sec.title}
+                        title={`${i + 1}. ${sec.title}`}
+                      >
+                        <p className="font-medium">{sec.reading[0]}</p>
+                        <p className="mt-2 text-muted-foreground">
+                          <span className="font-bold text-foreground">
+                            Your challenge:{" "}
+                          </span>
+                          {sec.activity}
+                        </p>
+                      </NbDisclosure>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Buy card */}

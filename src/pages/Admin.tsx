@@ -53,6 +53,7 @@ export default function Admin() {
   const upsertLesson = useMutation(api.admin.upsertLesson);
   const deleteLesson = useMutation(api.admin.deleteLesson);
   const publishLesson = useMutation(api.admin.publishLesson);
+  const updateBookingStatus = useMutation(api.admin.updateBookingStatus);
 
   const [tab, setTab] = useState<
     | "overview"
@@ -468,11 +469,19 @@ export default function Admin() {
             {(orders ?? [])
               .sort((a, b) => b.createdAt - a.createdAt)
               .map((o) => (
-                <NbBox key={o._id} className="flex items-center justify-between bg-card px-4 py-2.5">
-                  <p className="font-mono text-sm">
-                    {o.lessonSlug} · ${(o.amountCents / 100).toFixed(2)} ·{" "}
-                    {new Date(o.createdAt).toLocaleDateString()}
-                  </p>
+                <NbBox key={o._id} className="flex flex-wrap items-center justify-between gap-2 bg-card px-4 py-2.5">
+                  <div className="min-w-0">
+                    <p className="font-mono text-sm">
+                      {o.lessonSlug} · ${(o.amountCents / 100).toFixed(2)} ·{" "}
+                      {new Date(o.createdAt).toLocaleDateString()}
+                    </p>
+                    {(o.buyerName || o.buyerEmail) && (
+                      <p className="text-xs text-muted-foreground">
+                        {o.buyerName ?? "Student"}
+                        {o.buyerEmail ? ` · ${o.buyerEmail}` : ""}
+                      </p>
+                    )}
+                  </div>
                   <NbTag
                     className={
                       o.status === "paid"
@@ -527,6 +536,34 @@ export default function Admin() {
                       </span>
                     )}
                   </p>
+                  {b.status === "confirmed" && (
+                    <div className="mt-2 flex gap-2">
+                      <NbButton
+                        variant="ghost"
+                        className="px-2 py-1 text-[10px]"
+                        onClick={() =>
+                          void updateBookingStatus({
+                            bookingId: b._id,
+                            status: "cancelled",
+                          })
+                        }
+                      >
+                        Cancel session
+                      </NbButton>
+                      <NbButton
+                        variant="ghost"
+                        className="px-2 py-1 text-[10px]"
+                        onClick={() =>
+                          void updateBookingStatus({
+                            bookingId: b._id,
+                            status: "confirmed",
+                          })
+                        }
+                      >
+                        Keep confirmed
+                      </NbButton>
+                    </div>
+                  )}
                   {b.note && (
                     <p className="nb-border mt-2 bg-background px-2.5 py-1.5 text-sm">
                       <span className="font-bold">Student note:</span> {b.note}
