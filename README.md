@@ -39,6 +39,11 @@ Built as a real, sellable product: catalog + checkout + bookings + community
 - **Waitlist** — a pre-launch email capture on the landing page, stored in
   your own database (no third-party dependency). Counts are visible in the
   admin overview so you can gauge demand before promoting the course.
+- **Printable certificate** — finishing the free lesson unlocks a branded,
+  printable certificate (with a shareable link) — a motivator for students
+  and free word-of-mouth for the course.
+- **Mobile-first navigation** — a hamburger menu on phones, so every page is
+  reachable on the devices most non-technical learners actually use.
 - **Dashboard** — lesson progress, owned modules with one-click access to
   the course player, upcoming sessions, all in one place.
 

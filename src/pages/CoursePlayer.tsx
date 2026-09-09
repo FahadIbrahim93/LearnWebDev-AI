@@ -76,6 +76,12 @@ export default function CoursePlayer() {
   const [gateShake, setGateShake] = useState(0);
   const [finishBurst, setFinishBurst] = useState(0);
 
+  // Jump back to the top when the section changes so the new section title
+  // is what you see, not the middle of the previous one.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [section]);
+
   const markDone = (i: number) => {
     setDone((prev) => {
       const next = new Set(prev).add(i);

@@ -20,6 +20,7 @@ const Book = lazy(() => import("./pages/Book.tsx"));
 const CoursePlayer = lazy(() => import("./pages/CoursePlayer.tsx"));
 const Showcase = lazy(() => import("./pages/Showcase.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
+const Certificate = lazy(() => import("./pages/Certificate.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
@@ -140,6 +141,8 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/book/:slug" element={<Book />} />
               <Route path="/learn/:slug" element={<CoursePlayer />} />
               <Route path="/showcase" element={<Showcase />} />
+              <Route path="/certificate" element={<Certificate />} />
+              <Route path="/certificate/:name" element={<Certificate />} />
               <Route
                 path="/dashboard"
                 element={

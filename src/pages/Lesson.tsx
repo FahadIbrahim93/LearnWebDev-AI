@@ -13,6 +13,7 @@ import { Step2 } from "@/components/lesson/Step2";
 import { Step3 } from "@/components/lesson/Step3";
 import { Step4 } from "@/components/lesson/Step4";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
+import { NbConfetti } from "@/components/interactive/NbConfetti";
 import { cn } from "@/lib/utils";
 
 const LESSON_ID = "webdev-ai-v1";
@@ -40,6 +41,7 @@ export default function Lesson() {
     return stored ? new Set(JSON.parse(stored) as number[]) : new Set();
   });
   const [finished, setFinished] = useState(false);
+  const [finishBurst, setFinishBurst] = useState(0);
 
   // Merge server progress (signed-in) with local progress — take the max.
   const effectiveCompleted = useMemo(() => {
@@ -114,6 +116,7 @@ export default function Lesson() {
       onFinish={() => {
         markSolved();
         setFinished(true);
+        setFinishBurst((k) => k + 1);
       }}
     />,
   ];
@@ -122,9 +125,10 @@ export default function Lesson() {
     return (
       <main className="min-h-screen bg-background">
         <LessonTopBar onHome={() => setFinished(false)} />
-        <NbSection className="py-16">
-          <NbBox className="nb-shadow-lg mx-auto max-w-xl bg-accent p-8 text-center">
-            <Trophy className="mx-auto size-12" />
+        <NbSection className="relative py-16">
+          <NbConfetti burstKey={finishBurst} />
+          <NbBox className="nb-shadow-lg relative mx-auto max-w-xl bg-accent p-8 text-center">
+            <Trophy className="nb-wiggle mx-auto size-12" />
             <h1 className="mt-4 text-3xl font-bold uppercase tracking-tight">
               Lesson complete!
             </h1>
@@ -134,7 +138,10 @@ export default function Lesson() {
               than most people who say they want to &quot;learn web dev.&quot;
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <NbRouterLink to="/dashboard" variant="primary">
+              <NbRouterLink to="/certificate" variant="primary">
+                Get your certificate
+              </NbRouterLink>
+              <NbRouterLink to="/dashboard" variant="ghost">
                 Go to dashboard
               </NbRouterLink>
               <NbButton variant="ghost" onClick={() => setFinished(false)}>

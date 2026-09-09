@@ -4,6 +4,7 @@
  */
 import { useNavigate } from "react-router";
 import {
+  Award,
   BookOpen,
   CalendarClock,
   ShoppingCart,
@@ -114,12 +115,18 @@ export default function Dashboard() {
               })}
             </div>
             {lessonDone && (
-              <div className="nb-border mt-4 flex items-center gap-2 bg-accent px-3 py-2">
-                <Trophy className="size-4" />
-                <p className="text-sm font-bold uppercase">
-                  Lesson 1 complete — certificate earned!
-                </p>
-              </div>
+              <NbRouterLink
+                to="/certificate"
+                className="nb-border nb-press mt-4 flex items-center justify-between gap-2 bg-accent px-3 py-2"
+              >
+                <span className="flex items-center gap-2">
+                  <Trophy className="size-4" />
+                  <span className="text-sm font-bold uppercase">
+                    Certificate earned — view & print
+                  </span>
+                </span>
+                <Award className="size-4" />
+              </NbRouterLink>
             )}
           </NbBox>
 
@@ -187,16 +194,45 @@ export default function Dashboard() {
             </p>
           </NbRouterLink>
           {paidOrders.length === 0 ? (
-            <NbBox className="bg-card p-5 sm:col-span-2">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="size-4" />
-                <p className="text-sm font-bold uppercase">No purchases yet</p>
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Modules you buy appear here with lifetime access. Checkout is
-                currently in demo mode — nothing is charged.
-              </p>
-            </NbBox>
+            <>
+              {/* Recommended next module — the natural next step after the free lesson */}
+              {(() => {
+                const ownedSlugs = new Set(paidOrders.map((o) => o.lessonSlug));
+                const recommendation = (allLessons ?? [])
+                  .filter((l) => !l.isFree && !ownedSlugs.has(l.slug))
+                  .sort((a, b) => a.order - b.order)[0];
+                if (!recommendation) return null;
+                return (
+                  <NbRouterLink
+                    to={`/catalog/${recommendation.slug}`}
+                    className="flex flex-col p-5"
+                  >
+                    <NbTag className="self-start bg-[var(--chart-4)]">
+                      Recommended next
+                    </NbTag>
+                    <p className="mt-2 text-sm font-bold uppercase leading-tight">
+                      {recommendation.title}
+                    </p>
+                    <p className="mt-1 flex-1 text-xs leading-relaxed text-muted-foreground">
+                      {recommendation.tagline}
+                    </p>
+                    <p className="mt-2 font-mono text-xs font-bold">
+                      ${((recommendation.priceCents ?? 0) / 100).toFixed(0)} · one-time
+                    </p>
+                  </NbRouterLink>
+                );
+              })()}
+              <NbBox className="bg-card p-5">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="size-4" />
+                  <p className="text-sm font-bold uppercase">No purchases yet</p>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Modules you buy appear here with lifetime access. Checkout is
+                  currently in demo mode — nothing is charged.
+                </p>
+              </NbBox>
+            </>
           ) : (
             paidOrders.map((o) => (
               <NbRouterLink
