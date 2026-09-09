@@ -1,26 +1,35 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router";
+import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 
 export default function NotFound() {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="min-h-screen flex flex-col"
+      transition={{ duration: 0.4 }}
+      className="min-h-screen bg-background"
     >
-
-      
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="max-w-5xl mx-auto relative px-4">
-          <div className="flex items-center justify-center min-h-[200px]">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-              <p className="text-lg text-gray-600">Page Not Found</p>
-            </div>
+      <NbSection className="flex min-h-screen items-center py-16">
+        <NbBox className="nb-shadow-lg mx-auto max-w-lg bg-card p-8 text-center">
+          <NbTag className="bg-[var(--chart-4)]">Error 404</NbTag>
+          <h1 className="mt-4 text-5xl font-bold uppercase tracking-tight">
+            Page not found
+          </h1>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            This link doesn't lead anywhere — but your website journey does.
+            Head back and keep building.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <NbRouterLink to="/" variant="primary">
+              Back to home
+            </NbRouterLink>
+            <NbRouterLink to="/lesson" variant="accent">
+              Free lesson
+            </NbRouterLink>
           </div>
-        </div>
-      </div>
+        </NbBox>
+      </NbSection>
     </motion.div>
   );
 }

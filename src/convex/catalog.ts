@@ -121,6 +121,43 @@ export const cancelOrder = mutation({
   },
 });
 
+/** Fetch one of the caller's own orders (used by the checkout action). */
+export const getOrder = query({
+  args: { orderId: v.id("orders") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (userId === null) return null;
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.userId !== userId) return null;
+    return order;
+  },
+});
+
+/** Attach the Stripe session id to a pending order (used by the action). */
+export const attachStripeSession = mutation({
+  args: { orderId: v.id("orders"), sessionId: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.userId !== userId) throw new Error("Order not found.");
+    await ctx.db.patch(args.orderId, { stripeSessionId: args.sessionId });
+  },
+});
+
+/** Mark an order paid by id — called only from the Stripe webhook. */
+export const markOrderPaidById = internalMutation({
+  args: { orderId: v.id("orders"), sessionId: v.string() },
+  handler: async (ctx, args) => {
+    const order = await ctx.db.get(args.orderId);
+    if (!order || order.status === "paid") return;
+    await ctx.db.patch(args.orderId, {
+      status: "paid",
+      provider: "stripe",
+      stripeSessionId: args.sessionId,
+    });
+  },
+});
+
 /* ------------------------------------------------------------------ */
 /* Stripe fulfillment (called by webhook once keys are configured)      */
 /* ------------------------------------------------------------------ */

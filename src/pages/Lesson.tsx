@@ -50,10 +50,20 @@ export default function Lesson() {
     return merged;
   }, [completed, serverProgress]);
 
+  // Server progress seeds the step once (first load only) so it never yanks
+  // the learner back mid-session. Local navigation always wins afterwards.
+  const [seededFromServer, setSeededFromServer] = useState(false);
   const effectiveStep = useMemo(() => {
-    if (serverProgress && serverProgress.step > step) return serverProgress.step;
+    if (
+      !seededFromServer &&
+      serverProgress &&
+      serverProgress.step > step
+    ) {
+      setSeededFromServer(true);
+      return serverProgress.step;
+    }
     return step;
-  }, [step, serverProgress]);
+  }, [step, serverProgress, seededFromServer]);
 
   const persist = useCallback(
     (nextStep: number, nextCompleted: Set<number>) => {
@@ -78,11 +88,11 @@ export default function Lesson() {
 
   const markSolved = useCallback(() => {
     setCompleted((prev) => {
-      const next = new Set(prev).add(step);
-      persist(step, next);
+      const next = new Set(prev).add(effectiveStep);
+      persist(effectiveStep, next);
       return next;
     });
-  }, [step, persist]);
+  }, [effectiveStep, persist]);
 
   const goTo = useCallback(
     (next: number) => {

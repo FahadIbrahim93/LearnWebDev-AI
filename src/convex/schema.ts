@@ -103,6 +103,7 @@ const schema = defineSchema(
     // student builds
     showcase: defineTable({
       userId: v.id("users"),
+      authorName: v.optional(v.string()),
       title: v.string(),
       url: v.optional(v.string()),
       description: v.string(),
@@ -114,6 +115,7 @@ const schema = defineSchema(
     comments: defineTable({
       postId: v.id("showcase"),
       userId: v.id("users"),
+      authorName: v.optional(v.string()),
       body: v.string(),
       createdAt: v.number(),
     }).index("by_post", ["postId"]),

@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getCurrentUser } from "./users";
 
 const MAX_TITLE = 80;
 const MAX_BODY = 2000;
@@ -41,6 +42,7 @@ export const createPost = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new Error("Sign in to share your build.");
+    const user = await getCurrentUser(ctx);
 
     const title = args.title.trim();
     const description = args.description.trim();
@@ -57,6 +59,7 @@ export const createPost = mutation({
 
     return await ctx.db.insert("showcase", {
       userId,
+      authorName: user?.name ?? user?.email ?? "A student",
       title,
       description,
       url,
@@ -71,6 +74,7 @@ export const createComment = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new Error("Sign in to comment.");
+    const user = await getCurrentUser(ctx);
 
     const body = args.body.trim();
     if (body.length < 1 || body.length > 500) {
@@ -82,6 +86,7 @@ export const createComment = mutation({
     return await ctx.db.insert("comments", {
       postId: args.postId,
       userId,
+      authorName: user?.name ?? user?.email ?? "A student",
       body,
       createdAt: Date.now(),
     });

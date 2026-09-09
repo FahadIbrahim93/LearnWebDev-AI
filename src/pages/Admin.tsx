@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   BadgeDollarSign,
   BookLock,
+  CalendarClock,
   LayoutDashboard,
   ShieldCheck,
   Users,
@@ -46,7 +47,7 @@ export default function Admin() {
   const deleteLesson = useMutation(api.admin.deleteLesson);
   const publishLesson = useMutation(api.admin.publishLesson);
 
-  const [tab, setTab] = useState<"overview" | "lessons" | "orders" | "moderation">("overview");
+  const [tab, setTab] = useState<"overview" | "lessons" | "orders" | "sessions" | "moderation">("overview");
   const [editing, setEditing] = useState<
     | (typeof EMPTY_LESSON & { id?: Id<"lessons">; topics: string })
     | null
@@ -114,6 +115,7 @@ export default function Admin() {
               ["overview", "Overview", LayoutDashboard],
               ["lessons", "Lessons", BookLock],
               ["orders", "Orders", BadgeDollarSign],
+              ["sessions", "Sessions", CalendarClock],
               ["moderation", "Moderation", Users],
             ] as const
           ).map(([id, label, Icon]) => (
@@ -367,6 +369,41 @@ export default function Admin() {
                   >
                     {o.status}
                   </NbTag>
+                </NbBox>
+              ))}
+          </div>
+        )}
+
+        {/* Sessions */}
+        {tab === "sessions" && (
+          <div className="mt-6 space-y-2">
+            {(bookings ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">No sessions booked yet.</p>
+            )}
+            {(bookings ?? [])
+              .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+              .map((b) => (
+                <NbBox key={b._id} className="bg-card p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-mono text-sm font-bold">
+                      {b.date} · {b.time}
+                    </p>
+                    <NbTag
+                      className={
+                        b.status === "confirmed"
+                          ? "bg-[var(--chart-2)]"
+                          : "bg-muted"
+                      }
+                    >
+                      {b.status}
+                    </NbTag>
+                  </div>
+                  <p className="mt-1 text-sm">Module: {b.lessonSlug}</p>
+                  {b.note && (
+                    <p className="nb-border mt-2 bg-background px-2.5 py-1.5 text-sm">
+                      <span className="font-bold">Student note:</span> {b.note}
+                    </p>
+                  )}
                 </NbBox>
               ))}
           </div>

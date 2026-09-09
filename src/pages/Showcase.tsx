@@ -20,7 +20,7 @@ function timeAgo(ts: number) {
 }
 
 function CommentsPanel({ postId }: { postId: string }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const comments = useQuery(api.showcase.listComments, { postId: postId as never });
   const createComment = useMutation(api.showcase.createComment);
   const deleteComment = useMutation(api.showcase.deleteMyComment);
@@ -46,14 +46,19 @@ function CommentsPanel({ postId }: { postId: string }) {
       <div className="mt-2 space-y-2">
         {(comments ?? []).map((c) => (
           <div key={c._id} className="nb-border flex items-start justify-between gap-2 bg-background px-2.5 py-1.5">
-            <p className="text-sm leading-snug">{c.body}</p>
-            <button
-              onClick={() => void deleteComment({ commentId: c._id })}
-              className="shrink-0 text-muted-foreground hover:text-destructive"
-              aria-label="Delete comment"
-            >
-              <Trash2 className="size-3.5" />
-            </button>
+            <p className="text-sm leading-snug">
+              <span className="font-bold">{c.authorName ?? "A student"}:</span>{" "}
+              {c.body}
+            </p>
+            {user?._id === c.userId && (
+              <button
+                onClick={() => void deleteComment({ commentId: c._id })}
+                className="shrink-0 text-muted-foreground hover:text-destructive"
+                aria-label="Delete your comment"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            )}
           </div>
         ))}
         {comments?.length === 0 && (
@@ -192,9 +197,14 @@ export default function Showcase() {
               <NbBox key={p._id} className="bg-card">
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="text-lg font-bold uppercase leading-tight">
-                      {p.title}
-                    </h2>
+                    <div>
+                      <h2 className="text-lg font-bold uppercase leading-tight">
+                        {p.title}
+                      </h2>
+                      <p className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                        by {p.authorName ?? "A student"} · {timeAgo(p.createdAt)}
+                      </p>
+                    </div>
                     {p.url && (
                       <a
                         href={p.url}

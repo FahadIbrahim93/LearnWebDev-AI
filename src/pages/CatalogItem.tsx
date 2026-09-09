@@ -4,9 +4,9 @@
  * or book a live session.
  */
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { CalendarClock, Check, ShoppingCart } from "lucide-react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
@@ -19,6 +19,7 @@ export default function CatalogItem() {
   const lesson = useQuery(api.catalog.getLesson, { slug });
   const owned = useQuery(api.catalog.hasAccess, { slug });
   const startCheckout = useMutation(api.catalog.startCheckout);
+  const startCheckoutAction = useAction(api.stripe.startCheckoutAction);
   const completeDemo = useMutation(api.catalog.completeDemoCheckout);
   const cancelOrder = useMutation(api.catalog.cancelOrder);
 
@@ -40,13 +41,20 @@ export default function CatalogItem() {
         return;
       }
       if (!res.orderId) throw new Error("Could not start checkout.");
-      // Demo checkout — when Stripe keys are configured this is replaced by
-      // a redirect to Stripe's hosted checkout page.
       setCheckoutState("pending");
-      setTimeout(async () => {
-        await completeDemo({ orderId: res.orderId! });
-        setCheckoutState("paid");
-      }, 1400);
+      const session = await startCheckoutAction({
+        slug,
+        orderId: res.orderId,
+        origin: window.location.origin,
+      });
+      if (session.mode === "stripe" && session.url) {
+        // Real Stripe checkout — redirect to the hosted payment page.
+        window.location.assign(session.url);
+        return;
+      }
+      // Demo mode (no Stripe keys yet): simulate payment locally.
+      await completeDemo({ orderId: res.orderId });
+      setCheckoutState("paid");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Checkout failed.");
       setCheckoutState("error");
