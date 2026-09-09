@@ -50,7 +50,8 @@ Built as a real, sellable product: catalog + checkout + bookings + community
   admin overview so you can gauge demand before promoting the course.
 - **Printable certificate** — finishing the free lesson unlocks a branded,
   printable certificate (with a shareable link) — a motivator for students
-  and free word-of-mouth for the course.
+  and free word-of-mouth for the course. For signed-in learners the
+  certificate verifies real completion before it renders.
 - **Mobile-first navigation** — a hamburger menu on phones, so every page is
   reachable on the devices most non-technical learners actually use.
 - **Dashboard** — lesson progress, owned modules with one-click access to
@@ -58,6 +59,10 @@ Built as a real, sellable product: catalog + checkout + bookings + community
 
 ### For the course owner (admin area at `/admin`)
 - Revenue, order, and waitlist overview
+- **Insights tab** — free-lesson funnel (which of the 4 steps learners
+  reach), per-module engagement (started / finished / bought), and headline
+  totals. Computed live from your own data; the honest caveat about guest
+  learners is printed right on the page.
 - Full lesson CRUD: create, edit, publish/unpublish, delete modules
 - Order log
 - Session bookings with student name, email, and private notes

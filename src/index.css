@@ -125,6 +125,13 @@
   [role="button"]:not([disabled]) {
     cursor: pointer;
   }
+  /* Keyboard navigation: a thick, high-contrast focus ring that matches the
+     Neobrutalist hard-shadow language (never shown for mouse clicks). */
+  :focus-visible {
+    outline: 3px solid var(--border);
+    outline-offset: 2px;
+    box-shadow: 3px 3px 0 0 var(--chart-3);
+  }
 }
 
 /* Neobrutalism Minimalism helpers */

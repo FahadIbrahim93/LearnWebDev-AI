@@ -5,10 +5,15 @@
  */
 import { Navigate, useParams } from "react-router";
 import { Printer } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbRouterLink, NbSection } from "@/components/nb";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
+
+const LESSON_ID = "webdev-ai-v1";
+const TOTAL_STEPS = 4;
 
 function formatToday() {
   return new Date().toLocaleDateString("en-US", {
@@ -22,11 +27,15 @@ export default function Certificate() {
   usePageTitle("Certificate");
   const { name } = useParams();
   const { user, isLoading } = useAuth();
+  // Signed-in: verify the achievement honestly against saved progress.
+  const progress = useQuery(api.progress.getLessonProgress, {
+    lessonId: LESSON_ID,
+  });
 
   const rawName = name ?? user?.name ?? "";
   const learnerName = rawName.trim().slice(0, 60);
 
-  if (isLoading && !name) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
@@ -41,10 +50,34 @@ export default function Certificate() {
     return <Navigate to="/auth?returnTo=%2Fcertificate" replace />;
   }
 
+  // Integrity gate (signed-in users only): the certificate is earned, not
+  // printable-on-demand. Guests keep the honor-system path — the completion
+  // screen they reached on this device still links here.
+  const verified =
+    !user || (progress?.completedSteps?.length ?? 0) >= TOTAL_STEPS;
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <NbSection className="py-10 print:py-4">
+        {!verified ? (
+          <NbBox className="nb-shadow-lg mx-auto max-w-md bg-card p-8 text-center">
+            <p className="font-mono text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Almost there
+            </p>
+            <h1 className="mt-2 text-2xl font-bold uppercase">
+              Finish the lesson first
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              The certificate unlocks when all four steps are complete —
+              that's what makes it worth printing.
+            </p>
+            <NbRouterLink to="/lesson" variant="accent" className="mt-5">
+              Continue the lesson
+            </NbRouterLink>
+          </NbBox>
+        ) : (
+          <>
         {/* Screen-only controls */}
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 print:hidden">
           <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
@@ -138,6 +171,8 @@ export default function Certificate() {
             </div>
           </NbBox>
         </div>
+          </>
+        )}
       </NbSection>
     </div>
   );

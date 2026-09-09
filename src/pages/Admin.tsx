@@ -5,6 +5,7 @@
 import { useState } from "react";
 import {
   BadgeDollarSign,
+  BarChart3,
   BookLock,
   CalendarClock,
   Copy,
@@ -46,6 +47,7 @@ export default function Admin() {
   const lessons = useQuery(api.admin.listAllLessons, {});
   const bookings = useQuery(api.bookings.listAllBookingsWithUsers, {});
   const waitlist = useQuery(api.waitlist.listWaitlist, {});
+  const insights = useQuery(api.insights.getInsights, {});
   const moderate = useMutation(api.admin.moderatePost);
   const claimAdmin = useMutation(api.admin.claimAdmin);
   const upsertLesson = useMutation(api.admin.upsertLesson);
@@ -53,7 +55,13 @@ export default function Admin() {
   const publishLesson = useMutation(api.admin.publishLesson);
 
   const [tab, setTab] = useState<
-    "overview" | "lessons" | "orders" | "sessions" | "moderation" | "waitlist"
+    | "overview"
+    | "insights"
+    | "lessons"
+    | "orders"
+    | "sessions"
+    | "moderation"
+    | "waitlist"
   >("overview");
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState<
@@ -121,6 +129,7 @@ export default function Admin() {
           {(
             [
               ["overview", "Overview", LayoutDashboard],
+              ["insights", "Insights", BarChart3],
               ["lessons", "Lessons", BookLock],
               ["orders", "Orders", BadgeDollarSign],
               ["sessions", "Sessions", CalendarClock],
@@ -173,6 +182,96 @@ export default function Admin() {
                 Emails from the landing page, ready for launch announcements.
               </p>
             </NbBox>
+          </div>
+        )}
+
+        {/* Insights */}
+        {tab === "insights" && (
+          <div className="mt-6 space-y-6">
+            {!insights ? (
+              <p className="text-sm text-muted-foreground">Computing…</p>
+            ) : (
+              <>
+                {/* Free-lesson funnel */}
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Free-lesson funnel · signed-in learners
+                  </p>
+                  <div className="mt-2 space-y-1.5">
+                    {insights.funnel.map((f, i) => {
+                      const max = insights.funnel[0]?.reached || 1;
+                      const pct = Math.round((f.reached / max) * 100);
+                      return (
+                        <div
+                          key={f.title}
+                          className="nb-border bg-card px-3 py-2"
+                        >
+                          <div className="flex items-center justify-between gap-2 text-sm">
+                            <span className="font-bold">
+                              {i + 1}. {f.title}
+                            </span>
+                            <span className="font-mono text-xs">{f.reached}</span>
+                          </div>
+                          <div className="nb-border mt-1.5 h-2.5 w-full bg-background">
+                            <div
+                              className="h-full bg-[var(--chart-3)] transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Guests play the free lesson without signing in, so this
+                    undercounts the very top. Step 4 → completion is your
+                    readiness to buy signal.
+                  </p>
+                </div>
+
+                {/* Module engagement */}
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Module engagement
+                  </p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {insights.modules.map((m) => (
+                      <NbBox
+                        key={m.slug}
+                        className="bg-card px-4 py-3"
+                      >
+                        <p className="font-mono text-xs text-muted-foreground">
+                          /{m.slug}
+                        </p>
+                        <p className="mt-0.5 text-sm font-bold uppercase leading-tight">
+                          {m.title}
+                        </p>
+                        <div className="mt-2 flex gap-4 font-mono text-xs">
+                          <span>
+                            <strong>{m.started}</strong> started
+                          </span>
+                          <span>
+                            <strong>{m.completed}</strong> finished
+                          </span>
+                          <span>
+                            <strong>{m.purchased}</strong> bought
+                          </span>
+                        </div>
+                      </NbBox>
+                    ))
+                    }
+                  </div>
+                </div>
+
+                {/* Totals */}
+                <div className="nb-border bg-secondary px-4 py-3 font-mono text-xs">
+                  {insights.totals.learnersTracked} tracked lesson learners ·{" "}
+                  {insights.totals.purchases} purchases ·{" "}
+                  {insights.totals.bookings} sessions ·{" "}
+                  {insights.totals.waitlist} on waitlist
+                </div>
+              </>
+            )}
           </div>
         )}
 
