@@ -18,6 +18,17 @@ Built as a real, sellable product: catalog + checkout + bookings + community
   full written curriculum: short lessons, plain-language explanations, and a
   hands-on exercise at the end of every section. Section completion is saved
   per user, so learners always resume where they stopped.
+- **Interactive challenges in every section** — each of the 18 sections ends
+  in a mini-game that must be solved before the section can be checked off:
+  step-ordering puzzles, analogy matching, pick-the-best-prompt, form and
+  shot-list editors (keep / cut), prompt assembly, launch checklists, and
+  quick quizzes. Solving one triggers a confetti reward; wrong answers shake
+  with honest explanations of why. Progress (done + solved) persists per
+  user, and finishing a module earns a stamped completion card.
+- **Learn-by-doing everywhere** — the free 4-step lesson keeps its original
+  interactive demos (fake browser journey, hotspots, café builder), and the
+  paid modules now teach the same way: every concept is followed by a thing
+  to *do*, not just read.
 - **Course catalog** — searchable, filterable modules with detail pages,
   one-time pricing, and free/paid tiers.
 - **Checkout** — real Stripe Checkout when keys are configured; a clearly

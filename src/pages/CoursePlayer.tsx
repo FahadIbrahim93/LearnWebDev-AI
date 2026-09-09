@@ -1,9 +1,11 @@
 /**
  * CoursePlayer — the actual learning experience for owned modules.
  * Guarded by auth + ownership (free modules are open to signed-in users).
- * Section-by-section with completion tracking in localStorage.
+ * Section-by-section; each section ends in a hands-on interactive challenge
+ * that must be solved before the section can be marked done. Completion
+ * (done + solved) persists in localStorage per user.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router";
 import {
   ArrowLeft,
@@ -13,14 +15,31 @@ import {
   Circle,
   Lock,
   PenLine,
+  Sparkles,
 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getContentFor } from "@/convex/moduleContent";
 import { SiteHeader } from "@/components/SiteHeader";
-import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
+import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
+import { NbConfetti } from "@/components/interactive/NbConfetti";
+import { SectionActivity } from "@/components/interactive/SectionActivity";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+
+function readIdSet(key: string): Set<number> {
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored ? new Set(JSON.parse(stored) as number[]) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function writeIdSet(key: string, set: Set<number>) {
+  window.localStorage.setItem(key, JSON.stringify([...set]));
+}
 
 export default function CoursePlayer() {
   const { slug = "" } = useParams();
@@ -29,27 +48,61 @@ export default function CoursePlayer() {
   const owned = useQuery(api.catalog.hasAccess, { slug });
 
   const content = getContentFor(slug);
+  const uid = user?._id ?? "anon";
 
-  const storageKey = `${user?._id ?? "anon"}.module.${slug}.done`;
-  const [done, setDone] = useState<Set<number>>(() => {
-    const stored = window.localStorage.getItem(storageKey);
-    return stored ? new Set(JSON.parse(stored) as number[]) : new Set();
-  });
+  // `done` = sections marked complete; `solved` = challenges beaten.
+  // Keyed per user; reload when the signed-in user resolves.
+  const doneKey = `${uid}.module.${slug}.done`;
+  const solvedKey = `${uid}.module.${slug}.solved`;
+  const [done, setDone] = useState<Set<number>>(new Set());
+  const [solved, setSolved] = useState<Set<number>>(new Set());
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    // Back-compat: learners who finished sections before challenges existed
+    // keep their checkmarks (a pre-solved section counts as solved too —
+    // replaying is always allowed).
+    const prevDone = readIdSet(doneKey);
+    const prevSolved = readIdSet(solvedKey);
+    const mergedSolved = new Set(prevSolved);
+    for (const i of prevDone) mergedSolved.add(i);
+    setDone(prevDone);
+    setSolved(mergedSolved);
+    setLoaded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doneKey, solvedKey]);
+
   const [section, setSection] = useState(0);
+  const [gateShake, setGateShake] = useState(0);
+  const [finishBurst, setFinishBurst] = useState(0);
 
   const markDone = (i: number) => {
     setDone((prev) => {
       const next = new Set(prev).add(i);
-      window.localStorage.setItem(storageKey, JSON.stringify([...next]));
+      writeIdSet(doneKey, next);
+      return next;
+    });
+  };
+
+  const markSolved = (i: number) => {
+    setSolved((prev) => {
+      const next = new Set(prev).add(i);
+      writeIdSet(solvedKey, next);
       return next;
     });
   };
 
   const sections = content?.sections ?? [];
   const total = sections.length;
-  const finished = done.size >= total && total > 0;
+  const finished = total > 0 && done.size >= total;
+  const progress = total > 0 ? Math.round((done.size / total) * 100) : 0;
 
-  if (isLoading) {
+  // Fire the completion confetti once when the module is finished.
+  useEffect(() => {
+    if (finished) setFinishBurst((k) => (k === 0 ? 1 : k));
+  }, [finished]);
+
+  if (isLoading || !loaded) {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
@@ -112,16 +165,21 @@ export default function CoursePlayer() {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
-        <NbSection className="py-16">
-          <NbBox className="nb-shadow-lg mx-auto max-w-xl bg-accent p-8 text-center">
-            <BookOpenCheck className="mx-auto size-12" />
+        <NbSection className="relative py-16">
+          <NbConfetti burstKey={finishBurst} />
+          <NbBox className="nb-shadow-lg relative mx-auto max-w-xl bg-accent p-8 text-center">
+            <span className="nb-border nb-stamp mx-auto mt-1 inline-block bg-background px-4 py-1.5 font-mono text-sm font-bold uppercase tracking-widest">
+              Completed
+            </span>
+            <BookOpenCheck className="mx-auto mt-5 size-12" />
             <h1 className="mt-4 text-3xl font-bold uppercase tracking-tight">
               Module complete!
             </h1>
             <p className="mt-3 text-sm leading-relaxed">
-              You finished <strong>{lesson.title}</strong>. The real win isn't
-              the checkmarks — it's that you did the activities. Keep the
-              notes you made; they're the raw material for your site.
+              You finished <strong>{lesson.title}</strong> — every section read,
+              every challenge solved. The real win isn't the checkmarks; it's
+              that you did the activities. Keep the notes you made; they're the
+              raw material for your site.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
               <NbRouterLink to="/catalog" variant="primary">
@@ -141,7 +199,17 @@ export default function CoursePlayer() {
   }
 
   const s = sections[section];
-  const progress = Math.round((done.size / total) * 100);
+  const sectionSolved = solved.has(section);
+  const sectionDone = done.has(section);
+
+  const handleMarkDone = () => {
+    if (!sectionSolved) {
+      // Nudge: shake the challenge card so the eye goes where the work is.
+      setGateShake((k) => k + 1);
+      return;
+    }
+    markDone(section);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -171,7 +239,7 @@ export default function CoursePlayer() {
         </div>
         <div className="nb-border mt-3 h-4 bg-card">
           <div
-            className="h-full bg-[var(--chart-2)] transition-all"
+            className="h-full bg-[var(--chart-2)] transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -190,6 +258,8 @@ export default function CoursePlayer() {
               >
                 {done.has(i) ? (
                   <Check className="size-3.5 shrink-0" />
+                ) : solved.has(i) ? (
+                  <Sparkles className="size-3.5 shrink-0 text-[var(--chart-1)]" />
                 ) : (
                   <Circle className="size-3.5 shrink-0 opacity-40" />
                 )}
@@ -198,69 +268,107 @@ export default function CoursePlayer() {
             ))}
           </nav>
 
-          {/* Section content */}
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              Section {section + 1} of {total}
-            </p>
-            <h2 className="mt-1 text-xl font-bold uppercase sm:text-2xl">
-              {s.title}
-            </h2>
+          {/* Section content with slide transitions */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={section}
+              initial={{ opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -24 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                Section {section + 1} of {total}
+              </p>
+              <h2 className="mt-1 text-xl font-bold uppercase sm:text-2xl">
+                {s.title}
+              </h2>
 
-            <NbBox className="mt-4 bg-card p-5">
-              {s.reading.map((para, i) => (
-                <p
-                  key={i}
-                  className={cn(
-                    "leading-relaxed",
-                    i > 0 && "mt-3",
-                    i === 0 && "text-base font-medium",
-                  )}
-                >
-                  {para}
+              <NbBox className="mt-4 bg-card p-5">
+                {s.reading.map((para, i) => (
+                  <p
+                    key={i}
+                    className={cn(
+                      "leading-relaxed",
+                      i > 0 && "mt-3",
+                      i === 0 && "text-base font-medium",
+                    )}
+                  >
+                    {para}
+                  </p>
+                ))}
+              </NbBox>
+
+              <NbBox className="mt-4 bg-[var(--chart-3)] p-4">
+                <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
+                  <PenLine className="size-3.5" /> Your turn
                 </p>
-              ))}
-            </NbBox>
+                <p className="mt-1.5 text-sm leading-relaxed">{s.activity}</p>
+              </NbBox>
 
-            <NbBox className="mt-4 bg-[var(--chart-3)] p-4">
-              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
-                <PenLine className="size-3.5" /> Your turn
-              </p>
-              <p className="mt-1.5 text-sm leading-relaxed">{s.activity}</p>
-            </NbBox>
-
-            <NbBox className="mt-4 bg-secondary p-4">
-              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Remember
-              </p>
-              <p className="mt-1 text-sm font-medium leading-relaxed">
-                {s.recap}
-              </p>
-            </NbBox>
-
-            {/* Section controls */}
-            <div className="mt-6 flex items-center justify-between">
-              <NbButton
-                variant="ghost"
-                onClick={() => setSection((i) => Math.max(0, i - 1))}
-                disabled={section === 0}
+              {/* The interactive challenge — gates section completion */}
+              <NbBox
+                as="div"
+                key={gateShake}
+                className={cn(
+                  "mt-4 bg-secondary p-4",
+                  gateShake > 0 && !sectionSolved && "nb-shake",
+                )}
               >
-                <ArrowLeft className="size-4" /> Back
-              </NbButton>
-              {done.has(section) ? (
-                <NbButton
-                  onClick={() => setSection((i) => Math.min(total - 1, i + 1))}
-                  disabled={section === total - 1}
-                >
-                  Next <ArrowRight className="size-4" />
-                </NbButton>
-              ) : (
-                <NbButton variant="success" onClick={() => markDone(section)}>
-                  <Check className="size-4" /> Mark section done
-                </NbButton>
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Challenge · solve to check this section off
+                </p>
+                <SectionActivity
+                  slug={slug}
+                  sectionIndex={section}
+                  interactive={s.interactive}
+                  solvedAtMount={sectionSolved}
+                  onSolved={() => markSolved(section)}
+                />
+              </NbBox>
+
+              {!sectionDone && !sectionSolved && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Solve the challenge above to unlock "mark section done."
+                </p>
               )}
-            </div>
-          </div>
+
+              {/* Section controls */}
+              <div className="mt-6 flex items-center justify-between">
+                <button
+                  onClick={() => setSection((i) => Math.max(0, i - 1))}
+                  disabled={section === 0}
+                  className="nb-border nb-press inline-flex items-center gap-2 bg-background px-4 py-2 text-sm font-bold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ArrowLeft className="size-4" /> Back
+                </button>
+                {sectionDone ? (
+                  <button
+                    onClick={() =>
+                      setSection((i) => Math.min(total - 1, i + 1))
+                    }
+                    disabled={section === total - 1}
+                    className="nb-border nb-shadow-sm nb-press inline-flex items-center gap-2 bg-[var(--chart-2)] px-4 py-2 text-sm font-bold uppercase tracking-wide disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                  >
+                    Next <ArrowRight className="size-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleMarkDone}
+                    className={cn(
+                      "nb-border nb-shadow-sm nb-press inline-flex items-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wide",
+                      sectionSolved
+                        ? "bg-accent"
+                        : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    <Check className="size-4" />
+                    {sectionSolved ? "Mark section done" : "Solve to mark done"}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </NbSection>
     </div>

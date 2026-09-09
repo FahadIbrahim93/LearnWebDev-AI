@@ -86,9 +86,16 @@ export default function Landing() {
             </NbTag>
             <h1 className="mt-4 text-4xl font-bold uppercase leading-[1.05] tracking-tight sm:text-6xl">
               Build your own{" "}
-              <span className="nb-border inline-block bg-accent px-2">
+              <motion.span
+                className="nb-border inline-block bg-accent px-2"
+                animate={{
+                  rotate: [0, -1.2, 1.2, 0],
+                  scale: [1, 1.03, 1],
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              >
                 professional
-              </span>{" "}
+              </motion.span>{" "}
               website — with AI
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
@@ -111,7 +118,12 @@ export default function Landing() {
           </div>
 
           {/* Mini fake browser */}
-          <NbBox className="nb-shadow-lg bg-card p-4">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut", delay: 0.15 }}
+          >
+          <NbBox className="nb-float nb-shadow-lg bg-card p-4" style={{ "--nb-rot": "0.5deg" } as React.CSSProperties}>
             <div className="nb-border-4 bg-card">
               <div className="flex items-center gap-2 border-b-2 border-border bg-secondary px-3 py-2">
                 <span className="nb-border block size-3 bg-destructive/70" />
@@ -145,6 +157,7 @@ export default function Landing() {
               You'll build this in the free lesson
             </p>
           </NbBox>
+          </motion.div>
         </div>
       </NbSection>
 
@@ -169,12 +182,20 @@ export default function Landing() {
           Why this course works
         </h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          {PILLARS.map((f) => (
-            <NbBox key={f.title} className={f.bg + " p-5"}>
+          {PILLARS.map((f, i) => (
+            <motion.div
+              key={f.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.4, delay: i * 0.08 }}
+            >
+            <NbBox className={f.bg + " nb-shadow h-full p-5"}>
               <f.icon className="size-6" />
               <h3 className="mt-3 text-lg font-bold uppercase">{f.title}</h3>
               <p className="mt-1.5 text-sm leading-relaxed">{f.body}</p>
             </NbBox>
+            </motion.div>
           ))}
         </div>
       </NbSection>

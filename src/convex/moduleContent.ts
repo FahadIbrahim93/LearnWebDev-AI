@@ -9,7 +9,52 @@ export interface LessonSection {
   reading: string[];
   activity: string;
   recap: string;
+  /** A hands-on challenge that gates "mark done" — learning by doing. */
+  interactive: Interactive;
 }
+
+/** Every interactive game type, discriminated by `kind`. */
+export type Interactive =
+  | { kind: "order"; prompt: string; items: { text: string }[]; solvedText: string }
+  | {
+      kind: "match";
+      prompt: string;
+      pairs: { concept: string; analogy: string }[];
+      solvedText: string;
+    }
+  | {
+      kind: "pick-best";
+      prompt: string;
+      options: { text: string; why: string; best?: boolean }[];
+      solvedText: string;
+    }
+  | {
+      kind: "grow-site";
+      prompt: string;
+      candidates: { text: string; keep: boolean; why: string }[];
+      solvedText: string;
+    }
+  | {
+      kind: "prompt-builder";
+      prompt: string;
+      fragments: { text: string; correct: boolean; why: string }[];
+      solvedText: string;
+    }
+  | { kind: "vibe-switcher"; solvedText: string }
+  | {
+      kind: "checklist";
+      prompt: string;
+      items: { text: string }[];
+      /** Indices that must be selected to pass. */
+      mustSelect: number[];
+      solvedText: string;
+    }
+  | {
+      kind: "quiz";
+      prompt: string;
+      options: { label: string; correct?: boolean }[];
+      solvedText: string;
+    };
 
 export interface ModuleContent {
   slug: string;
@@ -35,6 +80,17 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Open any website you like. Ask yourself: which part is the messenger (your browser), and which part is the kitchen (the server holding the files)? There's nothing to click — you're training your mental model.",
         recap:
           "Browser = messenger and painter. Server = kitchen holding the files. Website = files served, then painted.",
+        interactive: {
+          kind: "order",
+          prompt: "Put the journey of a website visit in order, from your keypress to a painted page.",
+          items: [
+            { text: "You type an address and press Enter" },
+            { text: "Your browser asks across the internet: 'anyone home at this address?'" },
+            { text: "A server answers: 'yes — here are my files'" },
+            { text: "Your browser paints the files on your screen" },
+          ],
+          solvedText: "Exactly. That whole trip usually takes under a second.",
+        },
       },
       {
         title: "The three ingredients inside every site",
@@ -48,6 +104,17 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "On any webpage, find one thing that is skeleton (a heading), one thing that is outfit (a color or font choice), and one thing that is muscles (something that reacts when you click or type).",
         recap:
           "HTML = skeleton. CSS = outfit. JavaScript = muscles. Content = the reason people visit at all.",
+        interactive: {
+          kind: "match",
+          prompt: "Match each website ingredient to its everyday job.",
+          pairs: [
+            { concept: "HTML", analogy: "The skeleton — parts you can point at" },
+            { concept: "CSS", analogy: "The outfit — colors and where things sit" },
+            { concept: "JavaScript", analogy: "The muscles — things that react to taps" },
+            { concept: "Content", analogy: "The reason people visit at all" },
+          ],
+          solvedText: "Four ingredients, one page. You'll see them everywhere now.",
+        },
       },
       {
         title: "Where AI fits in — and where you fit in",
@@ -61,6 +128,26 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "In the free lesson's builder, generate a café site, then regenerate it with a different vibe. Notice: your words changed the outcome. That's direction — the skill you're here to build.",
         recap:
           "AI types; you direct. Clear description plus honest review equals professional results.",
+        interactive: {
+          kind: "pick-best",
+          prompt: "You need a site for your dog-grooming studio. Which prompt gets the best first draft?",
+          options: [
+            {
+              text: "\"Make me a website.\"",
+              why: "No audience, no content, no vibe — the AI has to invent everything, and it will guess wrong.",
+            },
+            {
+              text: "\"A website with HTML, CSS, and JavaScript, responsive, modern.\"",
+              why: "Sounds technical, but says nothing about who the site is for or what's on it.",
+            },
+            {
+              text: "\"A one-page site for my dog-grooming studio. Warm and friendly, big photos of dogs, prices for three packages, and a booking button that's always visible.\"",
+              why: "Names the audience, the content, the vibe, and the one action that matters. Best first draft, every time.",
+              best: true,
+            },
+          ],
+          solvedText: "Audience, content, vibe, one action. That's a prompt worth typing.",
+        },
       },
     ],
   },
@@ -81,6 +168,26 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Write your one-sentence goal. If you can't fill in the blanks, that's the real problem to solve first — and a perfect thing to bring to a live session.",
         recap:
           "One site, one job. If everything is important, nothing is.",
+        interactive: {
+          kind: "pick-best",
+          prompt: "Which of these is a complete one-sentence goal for a first site?",
+          options: [
+            {
+              text: "\"A modern website for my business.\"",
+              why: "Every site says that. It names no one it helps and nothing it removes.",
+            },
+            {
+              text: "\"My site helps local dog owners book a grooming visit without phoning around.\"",
+              why: "Names who it helps, what it does, and the pain it removes. Now every design decision has a judge.",
+              best: true,
+            },
+            {
+              text: "\"A beautiful site showcasing everything my business does.\"",
+              why: "'Everything' is the trap — five goals means five half-finished ones.",
+            },
+          ],
+          solvedText: "Who, what, without what. Steal that sentence shape for your own site.",
+        },
       },
       {
         title: "Structure: the five blocks of a one-page site",
@@ -95,6 +202,18 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Sketch five rectangles on paper and label them hero, proof, offer, how-it-works, contact. Write a one-line draft inside each. Paper first, pixels later — it's faster.",
         recap:
           "Hero, proof, offer, how-it-works, contact. Five blocks, in that order, done honestly.",
+        interactive: {
+          kind: "order",
+          prompt: "A stranger just landed on your one-page site. Put the five blocks in the order they should meet them.",
+          items: [
+            { text: "Hero: one sentence saying what you do and for whom" },
+            { text: "Proof: why a stranger should believe you" },
+            { text: "Offer: exactly what they get, said plainly" },
+            { text: "How it works: three steps, no jargon" },
+            { text: "Contact: one obvious way to reach you" },
+          ],
+          solvedText: "Five blocks, in that order — you just designed a one-page site.",
+        },
       },
       {
         title: "Directing AI to build it, then iterating",
@@ -108,6 +227,19 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Generate your one-page site from your sketch. Give at least two rounds of specific feedback, and keep a note of which changes improved it most — that's your taste developing.",
         recap:
           "Strong prompts name the audience, the vibe, and the content. Feedback beats starting over.",
+        interactive: {
+          kind: "prompt-builder",
+          prompt: "Assemble the strongest prompt from these fragments. Order matters.",
+          fragments: [
+            { text: "\"make me a website\"", correct: false, why: "That's the weak prompt — cut it." },
+            { text: "A one-page site for a home bakery", correct: true, why: "Names the project first." },
+            { text: "for neighbors who order weekly bread", correct: true, why: "Then the audience." },
+            { text: "with warm colors and big photos of the loaves", correct: true, why: "Then the vibe and content." },
+            { text: "responsive and modern and clean", correct: false, why: "Buzzwords the AI already does by default — no information." },
+            { text: "with an order button that's always visible", correct: true, why: "And finally, the one action that matters." },
+          ],
+          solvedText: "Project, audience, vibe, one action — assembled like a pro.",
+        },
       },
     ],
   },
@@ -128,6 +260,16 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Ask AI for ten headline options for your site. Read them aloud. Keep the two that sound like something a real person would say, and sleep on the final choice.",
         recap:
           "Clear beats clever. If they can't repeat it, replace it.",
+        interactive: {
+          kind: "pick-best",
+          prompt: "A customer can only hear your headline once. Which one survives?",
+          options: [
+            { text: "\"Artisanal excellence, redefined.\"", why: "Sounds like a poster, says nothing. Nobody can repeat it.", },
+            { text: "\"Fresh bread, baked every morning in Maplewood.\"", why: "What, when, where — a stranger could repeat it after hearing it once.", best: true },
+            { text: "\"Where passion meets flour.\"", why: "Poetic but empty. What do you actually sell?", },
+          ],
+          solvedText: "Say what you do, for whom, in plain words. Clear is professional.",
+        },
       },
       {
         title: "An about page people actually read",
@@ -141,6 +283,16 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Record two minutes of yourself answering 'why do you do this?' Transcribe, feed it to AI, and ask for a 120-word about page in your voice. Cut every sentence that isn't truly yours.",
         recap:
           "About pages are trust documents. Human first, history later, short always.",
+        interactive: {
+          kind: "order",
+          prompt: "Structure a 120-word about page people finish. Put the three beats in order.",
+          items: [
+            { text: "Who you are — the human, not the history" },
+            { text: "What you make — plainly, with one specific detail" },
+            { text: "What it's like to work with you — one honest sentence" },
+          ],
+          solvedText: "Three beats, 120 words. That's a whole trustworthy about page.",
+        },
       },
       {
         title: "Choosing images like a designer",
@@ -154,6 +306,17 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Write a six-photo shot list for your site: what each photo shows and where it sits. Shoot or collect one of them this week — real beats perfect.",
         recap:
           "Real over stock. Consistent over varied. A shot list is half the work.",
+        interactive: {
+          kind: "grow-site",
+          prompt: "You're filling the image slots of a home-bakery site. Keep the photos that build trust, cut the noise.",
+          candidates: [
+            { text: "A real (slightly imperfect) photo of yesterday's actual loaves", keep: true, why: "Real beats stock — it proves the bread exists." },
+            { text: "A glossy stock photo of a laughing model holding a baguette", keep: false, why: "Strangers' smiles in polished light read as fake instantly." },
+            { text: "Six photos of the same loaf from different angles", keep: false, why: "Repetition wastes a slot — vary what you show." },
+            { text: "One consistent series: counter, oven, loaf, hands, box, door sign", keep: true, why: "Consistent lighting and story is what reads as 'designed'." },
+          ],
+          solvedText: "Real, consistent, varied in subject. That's a designer's shot list.",
+        },
       },
     ],
   },
@@ -174,6 +337,16 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Shortlist three domain names and check availability. Say each out loud — if you'd have to spell it over the phone, drop it.",
         recap:
           "Domains are rented addresses. Short and spellable beats clever every time.",
+        interactive: {
+          kind: "pick-best",
+          prompt: "A friend says her cake business is 'Cakes by Anastasia-Marie-Confections'. Which domain should she grab?",
+          options: [
+            { text: "cakesbyanastasia-marie-confections.com", why: "Accurate but unsayable — she'd be spelling it on the phone forever.", },
+            { text: "anastasiascakes.com", why: "Short, spellable after hearing once, says exactly what it is.", best: true },
+            { text: "the-very-best-cakes-in-town-2026.com", why: "Nobody says that out loud, and it ages badly.", },
+          ],
+          solvedText: "Short, spellable, yours. Domain hunting done right.",
+        },
       },
       {
         title: "Publishing your site",
@@ -187,6 +360,17 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Publish your one-page site (or rehearse the steps with AI if you're not ready). Verify it loads in a private window on your actual address.",
         recap:
           "Publishing is delivery, not construction. Always verify in a private window.",
+        interactive: {
+          kind: "quiz",
+          prompt: "You just published your site. Why check it in a private/incognito window?",
+          options: [
+            { label: "Private windows are faster" },
+            { label: "Your own browser may show a cached, outdated version of the page", correct: true },
+            { label: "It hides your site from competitors" },
+            { label: "Private windows have better colors" },
+          ],
+          solvedText: "Right — you see what strangers see, not what your cache kept.",
+        },
       },
       {
         title: "The launch-day checks that matter",
@@ -201,6 +385,20 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Run all four checks on your site and note anything that failed. Bring failures to a live session — they're usually five-minute fixes.",
         recap:
           "Phone, links, speed, contact. Four minutes, most of the safety.",
+        interactive: {
+          kind: "checklist",
+          prompt: "Launch day. Tap every check you must run before announcing your site (all four are required).",
+          items: [
+            { text: "Open the site on your actual phone" },
+            { text: "Click every link on the page" },
+            { text: "Feel the speed on mobile data" },
+            { text: "Submit your own contact form / booking button" },
+            { text: "Email the site to ten friends for opinions" },
+            { text: "Change the colors one more time" },
+          ],
+          mustSelect: [0, 1, 2, 3],
+          solvedText: "All four. That minute each is your safety net — announce away.",
+        },
       },
     ],
   },
@@ -221,6 +419,16 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Write your offer in the pattern above. Then ask AI to play a skeptical customer and poke holes in it. Revise until the holes are gone.",
         recap:
           "Who, what, price, next step. Clear offers sell; vague ones apologize.",
+        interactive: {
+          kind: "pick-best",
+          prompt: "Which offer sentence would you actually book?",
+          options: [
+            { text: "\"Quality gardening services at fair prices. Contact us today!\"", why: "Says nothing a competitor couldn't say. No service, no price, no next step.", },
+            { text: "\"For busy Maplewood homeowners: two hours of garden cleanup, $80, booked online in two minutes.\"", why: "Who, what, price, next step — a person can decide, so they do.", best: true },
+            { text: "\"Transform your outdoor space into paradise. Limited spots!\"", why: "Pressure with no information. Clarity converts; urgency doesn't.", },
+          ],
+          solvedText: "Who, what, price, next step. That's the whole formula.",
+        },
       },
       {
         title: "Contact forms and booking that people finish",
@@ -234,6 +442,19 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Audit your contact or booking flow: count the fields, check the mobile experience, and add one sentence telling people what happens next.",
         recap:
           "Fewer fields, real calendars, explicit next steps. Friction is the enemy.",
+        interactive: {
+          kind: "grow-site",
+          prompt: "Design a contact form people actually finish. Keep what's needed, cut the friction.",
+          candidates: [
+            { text: "Name field", keep: true, why: "You need something to call them." },
+            { text: "One way to reply — email or phone", keep: true, why: "Without it, the form goes nowhere." },
+            { text: "Message box (optional)", keep: true, why: "Optional means fewer people bounce." },
+            { text: "Required company name", keep: false, why: "A neighbor booking garden help doesn't have a 'company'." },
+            { text: "Required phone AND email AND address", keep: false, why: "Every required field loses people. Ask for one way to reply." },
+            { text: "A sentence: 'You'll hear from me within one business day'", keep: true, why: "Explicit next steps keep completions high." },
+          ],
+          solvedText: "Fewer fields, one reply route, explicit next step. Friction lost.",
+        },
       },
       {
         title: "Honest persuasion: proof over hype",
@@ -247,6 +468,16 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Message two past customers and ask for one honest sentence about their experience. Put the best one, with their name, near your offer.",
         recap:
           "Proof beats hype. One real quote outweighs ten adjectives.",
+        interactive: {
+          kind: "pick-best",
+          prompt: "One testimonial slot on your gardening site. Which quote goes in?",
+          options: [
+            { text: "\"Amazing service!!! 10/10!!!\"", why: "Anonymous enthusiasm reads as invented. No name, no specifics, no trust.", },
+            { text: "\"They turned my jungle into a garden in one afternoon. — Priya, Maplewood\"", why: "Specific result, real name, real place. Believable in one line.", best: true },
+            { text: "\"Fast, reliable, professional, and efficient.\"", why: "Four adjectives, zero evidence. Exactly what hype looks like.", },
+          ],
+          solvedText: "One specific, named quote outweighs a wall of adjectives.",
+        },
       },
     ],
   },
@@ -268,6 +499,16 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Put a recurring 30-minute appointment in your calendar right now, titled 'site maintenance.' Future-you will be grateful.",
         recap:
           "Thirty minutes a month: click, update, glance at numbers. Boring beats broken.",
+        interactive: {
+          kind: "order",
+          prompt: "Your 30-minute monthly maintenance session. Order the routine.",
+          items: [
+            { text: "Minutes 0–10: click through every page and link" },
+            { text: "Minutes 10–20: update one stale thing — a price, a photo, an old event" },
+            { text: "Minutes 20–30: glance at visitor numbers — anyone arriving, and from where?" },
+          ],
+          solvedText: "Click, update, glance. Boring, unbeatable, done.",
+        },
       },
       {
         title: "Reading your visitors (just enough)",
@@ -281,6 +522,16 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Ask AI to recommend a simple analytics setup for your site, install it with its help, and note this month's three numbers somewhere you'll see them.",
         recap:
           "Three numbers: arrived, landed, left. Traffic without clarity is a crowded empty restaurant.",
+        interactive: {
+          kind: "pick-best",
+          prompt: "Your stats: 900 visits this month, 12 contact-form submissions. What's the diagnosis?",
+          options: [
+            { text: "You need more visitors — run ads immediately", why: "Traffic isn't the problem; 900 visits produced 12 interested people, so the page isn't converting them.", },
+            { text: "Your site is fine — 12 is a good number", why: "1.3% is thin for a local service. There's money being left on the table.", },
+            { text: "A clarity problem — visitors arrive but the offer doesn't give them a next step", why: "Traffic without clarity is a crowded empty restaurant. Fix the offer, not the ads.", best: true },
+          ],
+          solvedText: "Diagnose before you prescribe. Clarity first, traffic second.",
+        },
       },
       {
         title: "Growing without breaking",
@@ -294,6 +545,17 @@ export const MODULE_CONTENT: ModuleContent[] = [
           "Write down the one addition your customers have actually asked for. Park everything else on a 'someday' list — it will still be there next month.",
         recap:
           "Growth follows evidence. Evidence lives in customer requests, not hunches.",
+        interactive: {
+          kind: "grow-site",
+          prompt: "Your bakery site is working. Customers keep asking for one thing. Keep the evidence-backed addition, cut the hunches.",
+          candidates: [
+            { text: "A simple order form — three customers asked for it this month", keep: true, why: "Requests are evidence. Build what's asked for." },
+            { text: "A blog about sourdough philosophy", keep: false, why: "A hunch, not a request. Park it on the someday list." },
+            { text: "A fancy 3D spinning croissant animation", keep: false, why: "Impressive to you, distracting to them." },
+            { text: "Photos of this week's actual menu", keep: true, why: "Customers ask 'what's in the shop?' daily — this answers it." },
+          ],
+          solvedText: "Requests are evidence; hunches are guesses. You just ran product development.",
+        },
       },
     ],
   },
