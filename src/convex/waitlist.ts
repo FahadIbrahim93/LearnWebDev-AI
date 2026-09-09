@@ -21,11 +21,16 @@ export const joinWaitlist = mutation({
   },
 });
 
-/** Public: count only — no personal data leaves the server. */
+/**
+ * Public: signup timestamps only. The array shape keeps the landing page's
+ * `.length` social proof working, while ensuring no personal data (emails)
+ * ever leaves the server for anonymous callers.
+ */
 export const countWaitlist = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("waitlist").collect();
+    const rows = await ctx.db.query("waitlist").collect();
+    return rows.map((r) => r.createdAt);
   },
 });
 

@@ -44,7 +44,8 @@ Built as a real, sellable product: catalog + checkout + bookings + community
   emails. For production deliverability, verify your domain in Resend and
   update the `FROM` address in `src/convex/emails.ts`.
 - **Student showcase** — submit your build for review, browse approved
-  projects, and comment on classmates' work.
+  projects, and comment on classmates' work. Approved projects also appear
+  automatically as social proof on the landing page.
 - **Waitlist** — a pre-launch email capture on the landing page, stored in
   your own database (no third-party dependency). Counts are visible in the
   admin overview so you can gauge demand before promoting the course.

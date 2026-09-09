@@ -37,6 +37,8 @@ export const getInsights = query({
     const orders = await ctx.db.query("orders").collect();
     const bookings = await ctx.db.query("bookings").collect();
     const waitlist = await ctx.db.query("waitlist").collect();
+    const lessons = await ctx.db.query("lessons").collect();
+    const titleBySlug = new Map(lessons.map((l) => [l.slug, l.title] as const));
 
     const modules = MODULE_CONTENT.map((m) => {
       const rows = progressRows.filter((r) => r.moduleSlug === m.slug);
@@ -46,7 +48,7 @@ export const getInsights = query({
       ).length;
       return {
         slug: m.slug,
-        title: m.slug, // display title resolved client-side if lesson exists
+        title: titleBySlug.get(m.slug) ?? m.slug,
         sections: total,
         started: rows.filter((r) => r.doneSections.length > 0).length,
         completed: rows.filter((r) => r.doneSections.length >= total).length,

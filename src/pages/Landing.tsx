@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { usePageTitle } from "@/hooks/use-page-title";
 import {
   NbBox,
   NbButton,
@@ -24,7 +25,6 @@ import {
   NbTag,
 } from "@/components/nb";
 import { SiteHeader } from "@/components/SiteHeader";
-import { usePageTitle } from "@/hooks/use-page-title";
 
 const PILLARS = [
   {
@@ -57,6 +57,7 @@ export default function Landing() {
   usePageTitle();
   const joinWaitlist = useMutation(api.waitlist.joinWaitlist);
   const waitlistCount = useQuery(api.waitlist.countWaitlist, {});
+  const showcase = useQuery(api.showcase.listApproved, {});
   const [email, setEmail] = useState("");
   const [waitlistState, setWaitlistState] = useState<
     "idle" | "done" | "error"
@@ -237,6 +238,45 @@ export default function Landing() {
           </div>
         </NbBox>
       </NbSection>
+
+      {/* Social proof — real student builds, straight from the showcase */}
+      {showcase && showcase.length > 0 && (
+        <NbSection className="pb-14">
+          <h2 className="text-2xl font-bold uppercase tracking-tight sm:text-3xl">
+            People like you already shipped
+          </h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {showcase.slice(0, 3).map((p) => (
+              <NbBox key={p._id} className="nb-shadow flex flex-col bg-card p-5">
+                <p className="text-sm font-bold uppercase leading-tight">
+                  {p.title}
+                </p>
+                <p className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  by {p.authorName ?? "a student"}
+                </p>
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                  {p.description.length > 140
+                    ? `${p.description.slice(0, 140)}…`
+                    : p.description}
+                </p>
+                {p.url && (
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 text-xs font-bold uppercase tracking-widest underline"
+                  >
+                    Visit the site →
+                  </a>
+                )}
+              </NbBox>
+            ))}
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Real projects from the student showcase, shared with permission.
+          </p>
+        </NbSection>
+      )}
 
       {/* Final CTA + waitlist capture */}
       <NbSection className="pb-16">

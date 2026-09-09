@@ -135,6 +135,8 @@ export const sendOrderReceipt = internalMutation({
       .query("lessons")
       .withIndex("by_slug", (q) => q.eq("slug", order.lessonSlug))
       .unique();
+    const siteUrl =
+      process.env.STRIPE_SITE_URL ?? "https://your-course-site.example";
     await ctx.scheduler.runAfter(0, internal.emails.sendEmail, {
       to: email,
       subject: `Your receipt — ${lesson?.title ?? order.lessonSlug}`,
@@ -146,7 +148,7 @@ export const sendOrderReceipt = internalMutation({
         `Module: ${lesson?.title ?? order.lessonSlug}`,
         `Amount: $${(order.amountCents / 100).toFixed(2)} (${order.provider ?? "demo"})`,
         ``,
-        `Your module is unlocked forever: <site>/learn/${order.lessonSlug}`,
+        `Your module is unlocked forever: ${siteUrl}/learn/${order.lessonSlug}`,
         `Questions? Just reply to this email.`,
         ``,
         `— Web Development with AI`,
