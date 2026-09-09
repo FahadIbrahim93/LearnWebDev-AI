@@ -28,7 +28,7 @@ export function NbPickBestGame({
   const wrong = picked !== null && !solved;
 
   return (
-    <div>
+    <div className="space-y-3">
       <p className="text-sm font-medium">{prompt}</p>
       <div className="mt-3 space-y-2">
         {options.map((o, i) => {
@@ -92,7 +92,7 @@ export function NbGrowSiteGame({
   const wrong = allDecided && !correct;
 
   return (
-    <div>
+    <div className="space-y-3">
       <p className="text-sm font-medium">{prompt}</p>
       <p className="mt-1 text-xs text-muted-foreground">
         Keep = your visitors need it. Cut = noise that buries your one job.
@@ -203,7 +203,7 @@ export function NbPromptBuilderGame({
   const wrong = attempted && !solved;
 
   return (
-    <div>
+    <div className="space-y-3">
       <p className="text-sm font-medium">{prompt}</p>
       {/* The sentence so far */}
       <div className="nb-border nb-shadow-sm mt-3 min-h-16 bg-background p-3">
@@ -284,14 +284,12 @@ export function NbPromptBuilderGame({
           <Check className="size-3.5" /> {correctOrder.map((f) => f.why).join(" ")}
         </p>
       )}
-    </div>
-  );
+    </div>  );
 }
 
 /* ------------------------------------------------------------------ */
 /* Vibe switcher: same site, three outfits, one live preview           */
 /* ------------------------------------------------------------------ */
-
 export function NbVibeSwitcherGame({
   onSolved,
   solvedText,
@@ -329,12 +327,12 @@ export function NbVibeSwitcherGame({
   const current = VIBES.find((v) => v.id === active) ?? VIBES[0];
 
   return (
-    <div>
+    <div className="space-y-3">
       <p className="text-sm font-medium">
-        Same bakery, three vibes. Switch the outfit and watch the page change —
-        try all three to feel how much style carries.
+        Same bakery, three vibes. Switch the outfit — try all three to feel
+        how much style carries.
       </p>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         {VIBES.map((v) => (
           <GameButton
             key={v.id}
@@ -353,7 +351,7 @@ export function NbVibeSwitcherGame({
       </div>
       <motion.div
         key={active}
-        initial={{ opacity: 0.6, scale: 0.99 }}
+        initial={{ opacity: 0.6, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.25 }}
         className={cn("nb-border nb-shadow mt-3 p-4", current.bg)}
@@ -377,3 +375,4 @@ export function NbVibeSwitcherGame({
     </div>
   );
 }
+

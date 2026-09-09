@@ -15,6 +15,7 @@ import { Step3 } from "@/components/lesson/Step3";
 import { Step4 } from "@/components/lesson/Step4";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { NbConfetti } from "@/components/interactive/NbConfetti";
+import { NbGrowSiteGame } from "@/components/interactive/games2";
 import { cn } from "@/lib/utils";
 
 const LESSON_ID = "webdev-ai-v1";
@@ -44,6 +45,7 @@ export default function Lesson() {
   });
   const [finished, setFinished] = useState(false);
   const [finishBurst, setFinishBurst] = useState(0);
+  const [siteSolvedBurst, setSiteSolvedBurst] = useState(0);
 
   // Merge server progress (signed-in) with local progress — take the max.
   const effectiveCompleted = useMemo(() => {
@@ -112,15 +114,7 @@ export default function Lesson() {
     <Step1 key="s1" onNext={() => goTo(1)} onSolved={markSolved} />,
     <Step2 key="s2" onNext={() => goTo(2)} onSolved={markSolved} />,
     <Step3 key="s3" onNext={() => goTo(3)} onSolved={markSolved} />,
-    <Step4
-      key="s4"
-      onSolved={markSolved}
-      onFinish={() => {
-        markSolved();
-        setFinished(true);
-        setFinishBurst((k) => k + 1);
-      }}
-    />,
+    <Step4 key="s4" onSolved={markSolved} onFinish={() => { markSolved(); setFinished(true); setFinishBurst((k) => k + 1); }} />,
   ];
 
   if (finished) {
@@ -129,6 +123,7 @@ export default function Lesson() {
         <LessonTopBar onHome={() => setFinished(false)} />
         <NbSection className="relative py-16">
           <NbConfetti burstKey={finishBurst} />
+          <NbConfetti burstKey={siteSolvedBurst} />
           <NbBox className="nb-shadow-lg relative mx-auto max-w-xl bg-accent p-8 text-center">
             <Trophy className="nb-wiggle mx-auto size-12" />
             <h1 className="mt-4 text-3xl font-bold uppercase tracking-tight">
@@ -140,6 +135,17 @@ export default function Lesson() {
               than most people who say they want to &quot;learn web dev.&quot;
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <NbGrowSiteGame
+                prompt="Full rebuild challenge: decide what actually belongs on a homepage — before a designer ever opens Figma."
+                candidates={[
+                  { text: "A one-line promise of what you do", keep: true, why: "Visitors decide in seconds — one sentence wins." },
+                  { text: "Eight different navigation items", keep: false, why: "Nobody reads a menu that long; it buries the one job." },
+                  { text: "A real photo of your work or product", keep: true, why: "Proof beats promise — people need to trust you fast." },
+                  { text: "A press logo carousel", keep: false, why: "Nobody came for logos; it's decoration that steals attention." },
+                ]}
+                onSolved={() => setSiteSolvedBurst((k) => k + 1)}
+                solvedText="That's a homepage worth opening. Now play the same game on real sites — this is how good designers think."
+              />
               <NbRouterLink to="/certificate" variant="primary">
                 Get your certificate
               </NbRouterLink>
