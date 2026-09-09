@@ -36,7 +36,10 @@ export function NbPickBestGame({
           return (
             <button
               key={o.text}
-              onClick={() => setPicked(i)}
+              onClick={() => {
+                setPicked(i);
+                if (o.best) onSolved();
+              }}
               className={cn(
                 "nb-border nb-press w-full px-3 py-2 text-left text-sm",
                 isPicked && o.best && "bg-[var(--chart-2)]",
@@ -321,7 +324,9 @@ export function NbVibeSwitcherGame({
   ] as const;
 
   const [tried, setTried] = useState<Set<string>>(new Set());
+  const [active, setActive] = useState<string>(VIBES[0].id);
   const solved = tried.size >= VIBES.length;
+  const current = VIBES.find((v) => v.id === active) ?? VIBES[0];
 
   return (
     <div>
@@ -337,6 +342,7 @@ export function NbVibeSwitcherGame({
             onClick={() => {
               const next = new Set(tried).add(v.id);
               setTried(next);
+              setActive(v.id);
               if (next.size >= VIBES.length) onSolved();
             }}
           >
@@ -346,20 +352,20 @@ export function NbVibeSwitcherGame({
         ))}
       </div>
       <motion.div
-        key={[...tried].join("-")}
+        key={active}
         initial={{ opacity: 0.6, scale: 0.99 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.25 }}
-        className={cn("nb-border nb-shadow mt-3 p-4", VIBES[0].bg)}
+        className={cn("nb-border nb-shadow mt-3 p-4", current.bg)}
       >
         <p className="text-lg font-bold uppercase tracking-tight">
-          {VIBES[tried.size % VIBES.length].headline}
+          {current.headline}
         </p>
         <p className="mt-1 max-w-md text-sm opacity-80">
           Hand-mixed, 24-hour ferment, baked before your alarm goes off.
         </p>
         <span className="nb-border nb-shadow-sm mt-3 inline-block bg-background px-3 py-1.5 text-xs font-bold uppercase">
-          {VIBES[tried.size % VIBES.length].btn}
+          {current.btn}
         </span>
       </motion.div>
       <GameFeedback

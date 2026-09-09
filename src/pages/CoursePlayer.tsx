@@ -191,12 +191,38 @@ export default function CoursePlayer() {
     );
   }
 
-  if (!content || !lesson) {
+  if (!lesson) {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
         <NbSection className="py-20 text-center text-sm text-muted-foreground">
           Module not found.
+        </NbSection>
+      </div>
+    );
+  }
+
+  if (!content) {
+    // Authored in the catalog but no course content yet — be honest and
+    // route the learner somewhere useful instead of showing an empty player.
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <NbSection className="py-20">
+          <NbBox className="nb-shadow-lg mx-auto max-w-md bg-card p-8 text-center">
+            <BookOpenCheck className="mx-auto size-10" />
+            <h1 className="mt-3 text-2xl font-bold uppercase">
+              Coming soon
+            </h1>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              <strong>{lesson.title}</strong> is being written right now. Your
+              access is safe — it will appear in your dashboard the moment it
+              launches.
+            </p>
+            <NbRouterLink to="/dashboard" variant="accent" className="mt-5">
+              Back to dashboard
+            </NbRouterLink>
+          </NbBox>
         </NbSection>
       </div>
     );

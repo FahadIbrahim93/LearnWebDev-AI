@@ -307,15 +307,9 @@ export const MODULE_CONTENT: ModuleContent[] = [
         recap:
           "Real over stock. Consistent over varied. A shot list is half the work.",
         interactive: {
-          kind: "grow-site",
-          prompt: "You're filling the image slots of a home-bakery site. Keep the photos that build trust, cut the noise.",
-          candidates: [
-            { text: "A real (slightly imperfect) photo of yesterday's actual loaves", keep: true, why: "Real beats stock — it proves the bread exists." },
-            { text: "A glossy stock photo of a laughing model holding a baguette", keep: false, why: "Strangers' smiles in polished light read as fake instantly." },
-            { text: "Six photos of the same loaf from different angles", keep: false, why: "Repetition wastes a slot — vary what you show." },
-            { text: "One consistent series: counter, oven, loaf, hands, box, door sign", keep: true, why: "Consistent lighting and story is what reads as 'designed'." },
-          ],
-          solvedText: "Real, consistent, varied in subject. That's a designer's shot list.",
+          kind: "vibe-switcher",
+          solvedText:
+            "Same site, three feelings. Style isn't decoration — it's the first thing visitors read. Pick one vibe and stay consistent.",
         },
       },
     ],
