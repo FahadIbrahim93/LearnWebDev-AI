@@ -9,6 +9,7 @@ import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbButton, NbSection, NbTag } from "@/components/nb";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 function timeAgo(ts: number) {
   const mins = Math.floor((Date.now() - ts) / 60000);
@@ -89,6 +90,7 @@ function CommentsPanel({ postId }: { postId: string }) {
 }
 
 export default function Showcase() {
+  usePageTitle("Student showcase");
   const { isAuthenticated } = useAuth();
   const posts = useQuery(api.showcase.listApproved, {});
   const createPost = useMutation(api.showcase.createPost);

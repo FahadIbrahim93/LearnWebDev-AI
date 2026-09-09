@@ -24,6 +24,7 @@ import {
   NbTag,
 } from "@/components/nb";
 import { SiteHeader } from "@/components/SiteHeader";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const PILLARS = [
   {
@@ -53,6 +54,7 @@ const PILLARS = [
 ];
 
 export default function Landing() {
+  usePageTitle();
   const joinWaitlist = useMutation(api.waitlist.joinWaitlist);
   const waitlistCount = useQuery(api.waitlist.countWaitlist, {});
   const [email, setEmail] = useState("");

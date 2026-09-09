@@ -8,6 +8,7 @@ import { Printer } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbRouterLink, NbSection } from "@/components/nb";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 function formatToday() {
   return new Date().toLocaleDateString("en-US", {
@@ -18,6 +19,7 @@ function formatToday() {
 }
 
 export default function Certificate() {
+  usePageTitle("Certificate");
   const { name } = useParams();
   const { user, isLoading } = useAuth();
 

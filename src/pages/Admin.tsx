@@ -19,6 +19,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbButton, NbSection, NbTag } from "@/components/nb";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
@@ -37,6 +38,7 @@ const EMPTY_LESSON = {
 };
 
 export default function Admin() {
+  usePageTitle("Admin");
   const { isAuthenticated } = useAuth();
   const role = useQuery(api.admin.getMyRole, {});
   const pending = useQuery(api.admin.listPendingPosts, {});
@@ -418,6 +420,11 @@ export default function Admin() {
                       <span className="text-muted-foreground">
                         {" "}· {b.studentName ?? "Student"}
                         {b.studentEmail ? ` (${b.studentEmail})` : ""}
+                      </span>
+                    )}
+                    {b.timezone && (
+                      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                        {" "}· {b.timezone}
                       </span>
                     )}
                   </p>

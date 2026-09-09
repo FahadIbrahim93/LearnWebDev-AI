@@ -66,6 +66,7 @@ export const createBooking = mutation({
     lessonSlug: v.string(),
     date: v.string(),
     time: v.string(),
+    timezone: v.optional(v.string()),
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -85,6 +86,7 @@ export const createBooking = mutation({
       lessonSlug: args.lessonSlug,
       date: args.date,
       time: args.time,
+      timezone: args.timezone,
       note: args.note,
       status: "confirmed",
       createdAt: Date.now(),
@@ -123,7 +125,7 @@ export const sendBookingConfirmation = internalMutation({
     if (!email) return;
     const pretty = new Date(booking.date + "T00:00:00").toLocaleDateString(
       "en-US",
-      { weekday: "long", month: "long", day: "numeric" },
+      { weekday: "long", month: "long", day: "numeric", timeZone: booking.timezone || undefined },
     );
     await ctx.scheduler.runAfter(0, internal.emails.sendEmail, {
       to: email,
@@ -131,7 +133,7 @@ export const sendBookingConfirmation = internalMutation({
       text: [
         `Hi${user?.name ? ` ${user.name}` : ""},`,
         ``,
-        `Your 1:1 session is confirmed for ${pretty} at ${booking.time} (30 minutes).`,
+        `Your 1:1 session is confirmed for ${pretty} at ${booking.time}${booking.timezone ? ` (${booking.timezone})` : ""} (30 minutes).`,
         ``,
         booking.note ? `You mentioned: "${booking.note}"` : ``,
         ``,

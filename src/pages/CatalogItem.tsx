@@ -11,9 +11,11 @@ import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function CatalogItem() {
   const { slug = "" } = useParams();
+  usePageTitle("Module");
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const lesson = useQuery(api.catalog.getLesson, { slug });

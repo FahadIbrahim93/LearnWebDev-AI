@@ -8,6 +8,7 @@ import { CalendarCheck, Clock } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ function prettyDate(iso: string) {
 }
 
 export default function Book() {
+  usePageTitle("Book a session");
   const { slug = "" } = useParams();
   const lesson = useQuery(api.catalog.getLesson, { slug });
   const dates = useMemo(() => nextDays(8), []);
@@ -50,6 +52,13 @@ export default function Book() {
   const [booked, setBooked] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // The student's own timezone, detected once — shown for transparency and
+  // stored with the booking so the instructor can convert times correctly.
+  const tz = useMemo(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "your local time",
+    [],
+  );
+
   const handleBook = async () => {
     if (!time) return;
     setSubmitting(true);
@@ -59,6 +68,7 @@ export default function Book() {
         lessonSlug: slug,
         date,
         time,
+        timezone: tz,
         note: note.trim() || undefined,
       });
       setBooked(true);
@@ -79,8 +89,8 @@ export default function Book() {
             <h1 className="mt-3 text-2xl font-bold uppercase">You're booked!</h1>
             <p className="mt-2 text-sm leading-relaxed">
               Your 1:1 session for <strong>{lesson?.title ?? "this module"}</strong> is
-              confirmed for {prettyDate(date)} at {time}. A confirmation email
-              is on its way, and the session appears in your dashboard.
+              confirmed for {prettyDate(date)} at {time} ({tz}). A confirmation
+              email is on its way, and the session appears in your dashboard.
             </p>
             <div className="mt-5 flex justify-center gap-2">
               <NbRouterLink to="/dashboard" variant="primary">
@@ -201,6 +211,7 @@ export default function Book() {
               <p><strong>Day:</strong> {prettyDate(date)}</p>
               <p><strong>Time:</strong> {time ?? "not picked yet"}</p>
               <p><strong>Length:</strong> 30 minutes</p>
+              <p><strong>Your timezone:</strong> {tz}</p>
               <p><strong>Where:</strong> video call link sent after booking</p>
             </div>
             {error && (

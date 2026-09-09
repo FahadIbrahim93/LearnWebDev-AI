@@ -5,7 +5,7 @@
  * that must be solved before the section can be marked done. Completion
  * (done + solved) persists in localStorage per user.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router";
 import {
   ArrowLeft,
@@ -18,7 +18,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getContentFor } from "@/convex/moduleContent";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -26,6 +26,7 @@ import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { NbConfetti } from "@/components/interactive/NbConfetti";
 import { SectionActivity } from "@/components/interactive/SectionActivity";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { cn } from "@/lib/utils";
 
 function readIdSet(key: string): Set<number> {
@@ -43,9 +44,14 @@ function writeIdSet(key: string, set: Set<number>) {
 
 export default function CoursePlayer() {
   const { slug = "" } = useParams();
+  usePageTitle("Course");
   const { isAuthenticated, isLoading, user } = useAuth();
   const lesson = useQuery(api.catalog.getLesson, { slug });
   const owned = useQuery(api.catalog.hasAccess, { slug });
+  const serverProgress = useQuery(api.moduleProgress.getModuleProgress, {
+    moduleSlug: slug,
+  });
+  const saveProgress = useMutation(api.moduleProgress.saveModuleProgress);
 
   const content = getContentFor(slug);
   const uid = user?._id ?? "anon";
@@ -71,6 +77,35 @@ export default function CoursePlayer() {
     setLoaded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doneKey, solvedKey]);
+
+  // Server hydration (signed-in only): union with local so switching devices
+  // adds progress instead of losing it. Runs once per user+module.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    if (hydrated || !serverProgress) return;
+    setDone((prev) => {
+      const next = new Set(prev);
+      for (const s of serverProgress.doneSections) next.add(s);
+      return next;
+    });
+    setSolved((prev) => {
+      const next = new Set(prev);
+      for (const s of serverProgress.solvedSections) next.add(s);
+      return next;
+    });
+    setHydrated(true);
+  }, [serverProgress, hydrated]);
+
+  // Save-through: whenever local progress changes (and we're signed in with
+  // hydration settled), push the union up. Merge-safe on the server too.
+  const savePayload = useMemo(
+    () => ({ moduleSlug: slug, doneSections: [...done], solvedSections: [...solved] }),
+    [slug, done, solved],
+  );
+  useEffect(() => {
+    if (!hydrated || !user) return;
+    void saveProgress(savePayload);
+  }, [savePayload, hydrated, user, saveProgress]);
 
   const [section, setSection] = useState(0);
   const [gateShake, setGateShake] = useState(0);

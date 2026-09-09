@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const LEVEL_COLORS: Record<Level, string> = {
 };
 
 export default function Catalog() {
+  usePageTitle("Course catalog");
   const lessons = useQuery(api.catalog.listLessons, {});
   const seedCatalog = useMutation(api.seed.seedCatalog);
 

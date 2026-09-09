@@ -8,6 +8,7 @@ import { ArrowLeft, Home, Trophy } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Step1 } from "@/components/lesson/Step1";
 import { Step2 } from "@/components/lesson/Step2";
 import { Step3 } from "@/components/lesson/Step3";
@@ -26,6 +27,7 @@ const STEP_TITLES = [
 ];
 
 export default function Lesson() {
+  usePageTitle("Free interactive lesson");
   const { isAuthenticated } = useAuth();
   const saveProgress = useMutation(api.progress.saveLessonProgress);
   const serverProgress = useQuery(api.progress.getLessonProgress, {

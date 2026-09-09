@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { getContentFor } from "@/convex/moduleContent";
 import { useAuth } from "@/hooks/use-auth";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { cn } from "@/lib/utils";
@@ -35,15 +37,28 @@ function prettyDate(iso: string) {
 }
 
 export default function Dashboard() {
+  usePageTitle("Your dashboard");
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const progress = useQuery(api.progress.getLessonProgress, { lessonId: LESSON_ID });
   const orders = useQuery(api.catalog.listMyOrders, {});
   const bookings = useQuery(api.bookings.listMyBookings, {});
   const allLessons = useQuery(api.catalog.listLessons, {});
+  const moduleProgressRows = useQuery(api.moduleProgress.listMyModuleProgress, {});
 
   const lessonTitles = new Map(
     (allLessons ?? []).map((l) => [l.slug, l.title] as const),
+  );
+  // slug -> % complete, from server-synced per-module progress
+  const modulePct = new Map(
+    (moduleProgressRows ?? []).map((row) => {
+      const content = getContentFor(row.moduleSlug);
+      const total = content?.sections.length ?? 0;
+      return [
+        row.moduleSlug,
+        total > 0 ? Math.round((row.doneSections.length / total) * 100) : 0,
+      ] as const;
+    }),
   );
 
   const cancelBooking = useMutation(api.bookings.cancelBooking);
@@ -234,21 +249,35 @@ export default function Dashboard() {
               </NbBox>
             </>
           ) : (
-            paidOrders.map((o) => (
-              <NbRouterLink
-                key={o._id}
-                to={`/learn/${o.lessonSlug}`}
-                className="flex flex-col p-5"
-              >
-                <NbTag className="bg-[var(--chart-2)] self-start">Owned</NbTag>
-                <p className="mt-2 text-sm font-bold uppercase leading-tight">
-                  {lessonTitles.get(o.lessonSlug) ?? o.lessonSlug}
-                </p>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  Continue the course →
-                </p>
-              </NbRouterLink>
-            ))
+            paidOrders.map((o) => {
+              const pct = modulePct.get(o.lessonSlug) ?? 0;
+              return (
+                <NbRouterLink
+                  key={o._id}
+                  to={`/learn/${o.lessonSlug}`}
+                  className="flex flex-col p-5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <NbTag className={pct >= 100 ? "bg-[var(--chart-2)]" : "bg-[var(--chart-2)] self-start"}>
+                      {pct >= 100 ? "Complete ✓" : "Owned"}
+                    </NbTag>
+                    <span className="font-mono text-xs font-bold">{pct}%</span>
+                  </div>
+                  <div className="nb-border mt-2 h-2.5 w-full bg-background">
+                    <div
+                      className="h-full bg-[var(--chart-3)] transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm font-bold uppercase leading-tight">
+                    {lessonTitles.get(o.lessonSlug) ?? o.lessonSlug}
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">
+                    {pct >= 100 ? "Revisit any section →" : "Continue the course →"}
+                  </p>
+                </NbRouterLink>
+              );
+            })
           )}
         </div>
       </NbSection>

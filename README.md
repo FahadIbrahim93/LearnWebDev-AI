@@ -16,8 +16,10 @@ Built as a real, sellable product: catalog + checkout + bookings + community
   preview). Progress is saved locally and to the cloud when signed in.
 - **Course player** — owned modules open a dedicated learning view with the
   full written curriculum: short lessons, plain-language explanations, and a
-  hands-on exercise at the end of every section. Section completion is saved
-  per user, so learners always resume where they stopped.
+  hands-on exercise at the end of every section. Progress (done + solved
+  challenges) lives in localStorage **and** in the database for signed-in
+  learners, merged on load — so switching devices adds progress instead of
+  losing it. The dashboard shows a per-module progress bar and percentage.
 - **Interactive challenges in every section** — each of the 18 sections ends
   in a mini-game that must be solved before the section can be checked off:
   step-ordering puzzles, analogy matching, pick-the-best-prompt, form and
@@ -34,7 +36,8 @@ Built as a real, sellable product: catalog + checkout + bookings + community
 - **Checkout** — real Stripe Checkout when keys are configured; a clearly
   labeled demo checkout (no money moves) when they aren't.
 - **1:1 session booking** — pick a day, see live slot availability, confirm.
-  A confirmation email is scheduled automatically on booking.
+  The student's timezone is auto-detected, stored with the booking, shown in
+  the admin Sessions tab, and included in the confirmation email.
 - **Transactional email (Resend)** — booking confirmations and purchase
   receipts are sent through Resend's API. Without a `RESEND_API_KEY` the
   sends are silent no-ops (demo mode); paste the key and they become real

@@ -57,6 +57,15 @@ const schema = defineSchema(
       updatedAt: v.number(),
     }).index("by_user_lesson", ["userId", "lessonId"]),
 
+    // per-module course progress (done + solved sections), device-synced
+    moduleProgress: defineTable({
+      userId: v.id("users"),
+      moduleSlug: v.string(),
+      doneSections: v.array(v.number()),
+      solvedSections: v.array(v.number()),
+      updatedAt: v.number(),
+    }).index("by_user_module", ["userId", "moduleSlug"]),
+
     // purchasable catalog of course modules
     lessons: defineTable({
       slug: v.string(),
@@ -92,7 +101,8 @@ const schema = defineSchema(
       userId: v.id("users"),
       lessonSlug: v.string(),
       date: v.string(), // YYYY-MM-DD
-      time: v.string(), // HH:MM (24h)
+      time: v.string(), // HH:MM (24h) in the student's timezone
+      timezone: v.optional(v.string()), // e.g. "Europe/Berlin"
       note: v.optional(v.string()),
       status: bookingStatusValidator,
       createdAt: v.number(),
