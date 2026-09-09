@@ -14,6 +14,10 @@ Built as a real, sellable product: catalog + checkout + bookings + community
   what a website is, what it's made of, and where AI fits in. Ends with the
   learner building a small site themselves (vibe + color + words → live
   preview). Progress is saved locally and to the cloud when signed in.
+- **Course player** — owned modules open a dedicated learning view with the
+  full written curriculum: short lessons, plain-language explanations, and a
+  hands-on exercise at the end of every section. Section completion is saved
+  per user, so learners always resume where they stopped.
 - **Course catalog** — searchable, filterable modules with detail pages,
   one-time pricing, and free/paid tiers.
 - **Checkout** — real Stripe Checkout when keys are configured; a clearly
@@ -21,11 +25,14 @@ Built as a real, sellable product: catalog + checkout + bookings + community
 - **1:1 session booking** — pick a day, see live slot availability, confirm.
 - **Student showcase** — submit your build for review, browse approved
   projects, and comment on classmates' work.
-- **Dashboard** — lesson progress, owned modules, upcoming sessions, all in
-  one place.
+- **Waitlist** — a pre-launch email capture on the landing page, stored in
+  your own database (no third-party dependency). Counts are visible in the
+  admin overview so you can gauge demand before promoting the course.
+- **Dashboard** — lesson progress, owned modules with one-click access to
+  the course player, upcoming sessions, all in one place.
 
 ### For the course owner (admin area at `/admin`)
-- Revenue and order overview
+- Revenue, order, and waitlist overview
 - Full lesson CRUD: create, edit, publish/unpublish, delete modules
 - Order log
 - Session bookings with student notes

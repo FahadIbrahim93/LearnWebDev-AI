@@ -28,6 +28,14 @@ function nextDays(n: number) {
   return out;
 }
 
+function prettyDate(iso: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function Book() {
   const { slug = "" } = useParams();
   const lesson = useQuery(api.catalog.getLesson, { slug });
@@ -71,8 +79,8 @@ export default function Book() {
             <h1 className="mt-3 text-2xl font-bold uppercase">You're booked!</h1>
             <p className="mt-2 text-sm leading-relaxed">
               Your 1:1 session for <strong>{lesson?.title ?? "this module"}</strong> is
-              confirmed for {date} at {time}. A reminder will appear in your
-              dashboard.
+              confirmed for {prettyDate(date)} at {time}. A reminder will
+              appear in your dashboard.
             </p>
             <div className="mt-5 flex justify-center gap-2">
               <NbRouterLink to="/dashboard" variant="primary">
@@ -190,7 +198,7 @@ export default function Book() {
             </p>
             <div className="mt-3 space-y-1.5 text-sm">
               <p><strong>Module:</strong> {lesson?.title ?? "—"}</p>
-              <p><strong>Day:</strong> {date}</p>
+              <p><strong>Day:</strong> {prettyDate(date)}</p>
               <p><strong>Time:</strong> {time ?? "not picked yet"}</p>
               <p><strong>Length:</strong> 30 minutes</p>
               <p><strong>Where:</strong> video call link sent after booking</p>

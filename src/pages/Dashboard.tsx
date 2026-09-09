@@ -25,12 +25,25 @@ const STEP_TITLES = [
   "Build one yourself",
 ];
 
+function prettyDate(iso: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const progress = useQuery(api.progress.getLessonProgress, { lessonId: LESSON_ID });
   const orders = useQuery(api.catalog.listMyOrders, {});
   const bookings = useQuery(api.bookings.listMyBookings, {});
+  const allLessons = useQuery(api.catalog.listLessons, {});
+
+  const lessonTitles = new Map(
+    (allLessons ?? []).map((l) => [l.slug, l.title] as const),
+  );
 
   const cancelBooking = useMutation(api.bookings.cancelBooking);
 
@@ -141,7 +154,8 @@ export default function Dashboard() {
                     className="nb-border flex items-center justify-between bg-background px-2.5 py-2 text-sm"
                   >
                     <span>
-                      <strong>{b.date}</strong> · {b.time} · {b.lessonSlug}
+                      <strong>{prettyDate(b.date)}</strong> · {b.time} ·{" "}
+                      {lessonTitles.get(b.lessonSlug) ?? b.lessonSlug}
                     </span>
                     <button
                       onClick={() => void cancelBooking({ bookingId: b._id })}
@@ -187,15 +201,15 @@ export default function Dashboard() {
             paidOrders.map((o) => (
               <NbRouterLink
                 key={o._id}
-                to={`/catalog/${o.lessonSlug}`}
+                to={`/learn/${o.lessonSlug}`}
                 className="flex flex-col p-5"
               >
                 <NbTag className="bg-[var(--chart-2)] self-start">Owned</NbTag>
                 <p className="mt-2 text-sm font-bold uppercase leading-tight">
-                  {o.lessonSlug}
+                  {lessonTitles.get(o.lessonSlug) ?? o.lessonSlug}
                 </p>
                 <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  ${(o.amountCents / 100).toFixed(2)} · open module →
+                  Continue the course →
                 </p>
               </NbRouterLink>
             ))

@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
-import { CalendarClock, Check, ShoppingCart } from "lucide-react";
+import { BookOpenCheck, CalendarClock, Check, ShoppingCart } from "lucide-react";
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -131,22 +131,17 @@ export default function CatalogItem() {
                   One-time payment · yours forever
                 </p>
 
-                {owned ? (
-                  <NbButton className="mt-4 w-full" variant="success" disabled>
-                    <Check className="size-4" /> You own this module
-                  </NbButton>
-                ) : checkoutState === "paid" ? (
-                  <>
-                    <NbButton className="mt-4 w-full" variant="success" disabled>
-                      <Check className="size-4" /> Purchased!
-                    </NbButton>
-                    <p className="mt-2 text-center text-xs text-muted-foreground">
-                      It's now in your dashboard.
-                    </p>
-                  </>
+                {owned || checkoutState === "paid" ? (
+                  <NbRouterLink
+                    to={`/learn/${lesson.slug}`}
+                    variant="success"
+                    className="mt-4 w-full"
+                  >
+                    <BookOpenCheck className="size-4" /> Start the course
+                  </NbRouterLink>
                 ) : lesson.isFree ? (
                   <NbRouterLink
-                    to="/lesson"
+                    to={`/learn/${lesson.slug}`}
                     variant="accent"
                     className="mt-4 w-full"
                   >

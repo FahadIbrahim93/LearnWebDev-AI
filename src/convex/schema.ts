@@ -119,6 +119,12 @@ const schema = defineSchema(
       body: v.string(),
       createdAt: v.number(),
     }).index("by_post", ["postId"]),
+
+    // pre-launch email capture
+    waitlist: defineTable({
+      email: v.string(),
+      createdAt: v.number(),
+    }).index("by_email", ["email"]),
   },
   {
     schemaValidation: false,

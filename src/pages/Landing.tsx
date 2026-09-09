@@ -3,15 +3,19 @@
  * corners, hard shadows, flat color blocks. One job: start the free lesson
  * or browse the catalog.
  */
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
   CalendarClock,
   ChefHat,
+  Mail,
   MousePointerClick,
   Rocket,
   Sparkles,
 } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import {
   NbBox,
   NbButton,
@@ -49,6 +53,26 @@ const PILLARS = [
 ];
 
 export default function Landing() {
+  const joinWaitlist = useMutation(api.waitlist.joinWaitlist);
+  const waitlistCount = useQuery(api.waitlist.countWaitlist, {});
+  const [email, setEmail] = useState("");
+  const [waitlistState, setWaitlistState] = useState<
+    "idle" | "done" | "error"
+  >("idle");
+  const [waitlistError, setWaitlistError] = useState<string | null>(null);
+
+  const handleJoin = async () => {
+    setWaitlistError(null);
+    try {
+      await joinWaitlist({ email });
+      setWaitlistState("done");
+      setEmail("");
+    } catch (e) {
+      setWaitlistError(e instanceof Error ? e.message : "Could not join.");
+      setWaitlistState("error");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader active="/" />
@@ -191,7 +215,7 @@ export default function Landing() {
         </NbBox>
       </NbSection>
 
-      {/* Final CTA */}
+      {/* Final CTA + waitlist capture */}
       <NbSection className="pb-16">
         <NbBox className="nb-shadow-lg bg-accent p-8 text-center">
           <h2 className="text-3xl font-bold uppercase tracking-tight">
@@ -208,6 +232,45 @@ export default function Landing() {
             <NbRouterLink to="/catalog" variant="ghost" className="px-5 py-3 text-base">
               <CalendarClock className="size-4" /> See modules & book a session
             </NbRouterLink>
+          </div>
+
+          <div className="mx-auto mt-8 max-w-md border-t-2 border-dashed border-border pt-6">
+            {waitlistState === "done" ? (
+              <p className="nb-border bg-background px-3 py-2.5 text-sm font-bold">
+                You're on the list! We'll email you when new modules drop.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs font-bold uppercase tracking-widest">
+                  Not ready yet? Get one useful web tip per email
+                </p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="nb-border flex-1 bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground/60"
+                    aria-label="Email address"
+                  />
+                  <NbButton
+                    onClick={handleJoin}
+                    disabled={!email.includes("@")}
+                    className="shrink-0"
+                  >
+                    <Mail className="size-4" /> Keep me posted
+                  </NbButton>
+                </div>
+                {waitlistError && (
+                  <p className="mt-2 text-sm text-destructive">{waitlistError}</p>
+                )}
+                {waitlistCount && waitlistCount.length > 5 && (
+                  <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {waitlistCount.length} people already on the list
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </NbBox>
       </NbSection>

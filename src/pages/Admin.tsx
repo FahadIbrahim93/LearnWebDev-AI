@@ -41,6 +41,7 @@ export default function Admin() {
   const orders = useQuery(api.admin.listAllOrders, {});
   const lessons = useQuery(api.admin.listAllLessons, {});
   const bookings = useQuery(api.bookings.listAllBookings, {});
+  const waitlist = useQuery(api.waitlist.listWaitlist, {});
   const moderate = useMutation(api.admin.moderatePost);
   const claimAdmin = useMutation(api.admin.claimAdmin);
   const upsertLesson = useMutation(api.admin.upsertLesson);
@@ -134,7 +135,7 @@ export default function Admin() {
 
         {/* Overview */}
         {tab === "overview" && (
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <NbBox className="nb-shadow bg-card p-5">
               <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Revenue (paid)</p>
               <p className="mt-2 font-mono text-3xl font-bold">{revenue}</p>
@@ -155,6 +156,13 @@ export default function Admin() {
               <p className="mt-2 font-mono text-3xl font-bold">{bookings?.length ?? 0}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {(bookings ?? []).filter((b) => b.status === "confirmed").length} upcoming
+              </p>
+            </NbBox>
+            <NbBox className="nb-shadow bg-card p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Waitlist</p>
+              <p className="mt-2 font-mono text-3xl font-bold">{waitlist?.length ?? 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Emails from the landing page, ready for launch announcements.
               </p>
             </NbBox>
           </div>

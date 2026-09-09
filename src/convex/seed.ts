@@ -94,10 +94,13 @@ const SEED_LESSONS = [
 export const seedCatalog = mutation({
   args: {},
   handler: async (ctx) => {
+    // Slug-level uniqueness guard: safe even if two visitors seed at once.
     const existing = await ctx.db.query("lessons").collect();
-    if (existing.length > 0) return;
+    const slugs = new Set(existing.map((l) => l.slug));
     for (const lesson of SEED_LESSONS) {
+      if (slugs.has(lesson.slug)) continue;
       await ctx.db.insert("lessons", lesson);
+      slugs.add(lesson.slug);
     }
   },
 });
