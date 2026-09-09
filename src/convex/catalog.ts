@@ -118,6 +118,23 @@ export const completeDemoCheckout = mutation({
       orderId: args.orderId,
     });
 
+    // Heads-up for the course owner (dormant without OWNER_EMAIL + key).
+    const lesson = await ctx.db
+      .query("lessons")
+      .withIndex("by_slug", (q) => q.eq("slug", order.lessonSlug))
+      .unique();
+    await ctx.scheduler.runAfter(0, internal.emails.notifyOwner, {
+      subject: `New purchase — ${lesson?.title ?? order.lessonSlug} ($${(order.amountCents / 100).toFixed(2)})`,
+      text: [
+        `A module was just purchased (${order.provider ?? "demo"} checkout):`,
+        ``,
+        `Module: ${lesson?.title ?? order.lessonSlug}`,
+        `Amount: $${(order.amountCents / 100).toFixed(2)}`,
+        ``,
+        `Revenue details in the admin area → Orders tab.`,
+      ].join("\n"),
+    });
+
     return args.orderId;
   },
 });

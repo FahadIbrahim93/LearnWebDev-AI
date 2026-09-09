@@ -94,7 +94,9 @@ manually in this environment.
 2. Add these env vars via the project's Keys/API keys UI:
    - `STRIPE_SECRET_KEY`
    - `STRIPE_WEBHOOK_SECRET`
-   - (optional) `STRIPE_SITE_URL` — defaults to the current origin
+   - (optional) `STRIPE_SITE_URL` — used for checkout redirects and the
+     purchase-receipt link
+   - (optional) `OWNER_EMAIL` — your email, enables owner notifications
 3. In the Stripe dashboard, add a webhook endpoint pointing at
    `https://<your-convex-domain>/stripe_webhook` listening for
    `checkout.session.completed`, and paste the signing secret as
@@ -108,6 +110,11 @@ manually in this environment.
 
 Booking confirmations and purchase receipts start flowing immediately —
 no other code changes needed.
+
+**Optional — get notified yourself:** add `OWNER_EMAIL` (your email
+address) alongside the Resend key, and you'll also receive a short email
+for every new booking and purchase. Without it, owner notifications stay
+silent no-ops.
 
 Until keys exist, checkout runs in demo mode: orders are created and marked
 paid without charging anyone, so the whole flow is demo-able safely.

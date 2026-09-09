@@ -3,6 +3,16 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 
+/** Server-side pretty date (timezone-optional) for email copy. */
+function prettyDate(iso: string, timeZone?: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone,
+  });
+}
+
 export const listMyBookings = query({
   args: {},
   handler: async (ctx) => {
@@ -95,6 +105,26 @@ export const createBooking = mutation({
     // Confirmation email — detached, never blocks or fails the booking.
     await ctx.scheduler.runAfter(0, internal.bookings.sendBookingConfirmation, {
       bookingId,
+    });
+
+    // Heads-up for the course owner (dormant without OWNER_EMAIL + key).
+    const lesson = await ctx.db
+      .query("lessons")
+      .withIndex("by_slug", (q) => q.eq("slug", args.lessonSlug))
+      .unique();
+    await ctx.scheduler.runAfter(0, internal.emails.notifyOwner, {
+      subject: `New session booking — ${prettyDate(args.date, args.timezone)} ${args.time}`,
+      text: [
+        `New 1:1 booking:`,
+        ``,
+        `Module: ${lesson?.title ?? args.lessonSlug}`,
+        `When: ${prettyDate(args.date, args.timezone)} at ${args.time}${args.timezone ? ` (${args.timezone})` : ""}`,
+        args.note ? `Note: "${args.note}"` : ``,
+        ``,
+        `Manage it in the admin area → Sessions tab.`,
+      ]
+        .filter((l) => l !== "")
+        .join("\n"),
     });
 
     return bookingId;

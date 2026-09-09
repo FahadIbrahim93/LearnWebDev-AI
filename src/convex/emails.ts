@@ -48,3 +48,39 @@ export const sendEmail = internalAction({
     }
   },
 });
+
+/**
+ * Notify the course owner (you) about important events — new bookings and
+ * purchases. Only sends when BOTH env vars exist: RESEND_API_KEY and
+ * OWNER_EMAIL. Set OWNER_EMAIL in the Keys tab to start receiving them;
+ * without it these are silent no-ops, never errors.
+ */
+export const notifyOwner = internalAction({
+  args: {
+    subject: v.string(),
+    text: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    const key = process.env.RESEND_API_KEY;
+    const owner = process.env.OWNER_EMAIL;
+    if (!key || !owner) return; // dormant by design
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: FROM,
+        to: [owner],
+        subject: args.subject,
+        text: args.text,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Owner notify failed (${res.status}): ${body}`);
+    }
+  },
+});

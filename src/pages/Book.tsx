@@ -2,12 +2,13 @@
  * Book — schedule a 1:1 session for a module. Learner picks a date, sees
  * live slot availability, adds an optional note, and confirms.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
 import { CalendarCheck, Clock } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
+import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ function prettyDate(iso: string) {
 export default function Book() {
   usePageTitle("Book a session");
   const { slug = "" } = useParams();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const lesson = useQuery(api.catalog.getLesson, { slug });
   const dates = useMemo(() => nextDays(8), []);
   const [date, setDate] = useState(dates[0]);
@@ -78,6 +80,30 @@ export default function Book() {
       setSubmitting(false);
     }
   };
+
+  // Signed-out visitors can browse the form, but finishing the flow requires
+  // an account (slots + confirmation emails are tied to one). Send them to
+  // auth with a return path that lands them back here, form intact.
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      const params = new URLSearchParams();
+      params.set("returnTo", `/book/${slug}`);
+      params.set("reason", "booking");
+      window.history.replaceState(null, "", `/auth?${params.toString()}`);
+      window.location.reload();
+    }
+  }, [authLoading, isAuthenticated, slug]);
+
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader active="/catalog" />
+        <NbSection className="py-20 text-center text-sm text-muted-foreground">
+          Checking sign-in…
+        </NbSection>
+      </div>
+    );
+  }
 
   if (booked) {
     return (
