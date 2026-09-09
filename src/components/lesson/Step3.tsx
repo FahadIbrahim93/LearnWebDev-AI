@@ -113,7 +113,7 @@ export function Step3({
         </div>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           This is a pretend AI — nothing is sent anywhere. Type a wish and see
-          what \"it\" does.
+          what “it” does.
         </p>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr]">

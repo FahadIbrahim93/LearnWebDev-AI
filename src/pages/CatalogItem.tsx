@@ -3,7 +3,7 @@
  * description, topics, price, and the actions: start learning (free), buy,
  * or book a live session.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { BookOpenCheck, CalendarClock, Check, ShoppingCart } from "lucide-react";
 import { useMutation, useAction, useQuery } from "convex/react";
@@ -29,6 +29,26 @@ export default function CatalogItem() {
     "idle" | "pending" | "paid" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
+
+  // Returning from Stripe: ?checkout=success (payment done, webhook may lag a
+  // few seconds) or ?checkout=cancelled. While ownership hasn't landed yet we
+  // show a "confirming…" banner; once `owned` flips true the buy card swaps
+  // itself for "Start the course" — no extra state needed.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const stripeReturn = searchParams.get("checkout");
+  const waitingForConfirm = stripeReturn === "success" && !owned;
+
+  // Give up waiting after 20s — clean the URL so the normal buy card returns
+  // instead of a dead "confirming" state (e.g. webhook misconfigured).
+  useEffect(() => {
+    if (!stripeReturn) return;
+    const t = window.setTimeout(() => {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("checkout");
+      setSearchParams(url.searchParams, { replace: true });
+    }, 20000);
+    return () => window.clearTimeout(t);
+  }, [stripeReturn, setSearchParams]);
 
   const handleBuy = async () => {
     if (!isAuthenticated) {
@@ -154,6 +174,15 @@ export default function CatalogItem() {
                   >
                     Start learning now
                   </NbRouterLink>
+                ) : waitingForConfirm ? (
+                  <NbBox className="mt-4 bg-accent p-3 text-center">
+                    <p className="text-sm font-bold uppercase">
+                      Payment received — confirming…
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed">
+                      Usually a few seconds. This page unlocks automatically.
+                    </p>
+                  </NbBox>
                 ) : checkoutState === "pending" ? (
                   <NbButton className="mt-4 w-full" disabled>
                     Processing payment…

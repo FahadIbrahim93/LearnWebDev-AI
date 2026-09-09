@@ -193,9 +193,10 @@ export function Step1({
           live on the server. Knowing who serves them and who paints them helps
           you describe what you want — and spot when something looks broken.
         </NbDisclosure>
-        <NbDisclosure title="Press the Got it! button above?">
-          Nothing breaks — you can replay the 4 beats as many times as you
-          like. Repetition is how non-technical brains build intuition.
+        <NbDisclosure title="Can I watch the journey again?">
+          Absolutely — replay the 4 beats as many times as you like with the
+          Back and Next buttons. Repetition is how non-technical brains build
+          intuition.
         </NbDisclosure>
       </div>
 

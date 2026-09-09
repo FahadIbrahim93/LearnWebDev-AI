@@ -37,7 +37,7 @@ interface Built {
   items: [string, string][];
 }
 
-function buildSite(vibe: Vibe, color: string, prompt: string, gen: number): Built {
+function buildSite(vibe: Vibe, prompt: string, gen: number): Built {
   const p = prompt.trim() || "a friendly café website";
 
   const titles: Record<Vibe, string> = {
@@ -59,7 +59,6 @@ function buildSite(vibe: Vibe, color: string, prompt: string, gen: number): Buil
     bold: [
       ["MEGA LATTE", "$4.50"],
       ["TURBO MOCHA", "$5.00"],
-      ["NITRO COLD BREW", "$5.50"],
       ["NITRO COLD BREW", "$5.50"],
     ],
     cozy: [
@@ -107,7 +106,7 @@ export function Step4({
     setAssembling(true);
     onSolved();
     timer.current = window.setTimeout(() => {
-      setBuilt(buildSite(vibe, color, prompt, gen));
+      setBuilt(buildSite(vibe, prompt, gen));
       setAssembling(false);
       setGen((g) => g + 1);
     }, 1400);
