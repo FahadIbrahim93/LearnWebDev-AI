@@ -1,0 +1,410 @@
+/**
+ * Admin — everything the course owner manages: stats, lesson catalog CRUD,
+ * orders, and showcase moderation. Guarded client-side by isAdmin.
+ */
+import { useState } from "react";
+import {
+  BadgeDollarSign,
+  BookLock,
+  LayoutDashboard,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { SiteHeader } from "@/components/SiteHeader";
+import { NbBox, NbButton, NbSection, NbTag } from "@/components/nb";
+import { useAuth } from "@/hooks/use-auth";
+
+const LEVELS = ["beginner", "intermediate", "advanced"] as const;
+
+const EMPTY_LESSON = {
+  slug: "",
+  title: "",
+  tagline: "",
+  description: "",
+  level: "beginner" as (typeof LEVELS)[number],
+  priceCents: 2900,
+  isFree: false,
+  isPublished: false,
+  minutes: 45,
+  topics: "",
+  order: 10,
+};
+
+export default function Admin() {
+  const { isAuthenticated } = useAuth();
+  const role = useQuery(api.admin.getMyRole, {});
+  const pending = useQuery(api.admin.listPendingPosts, {});
+  const orders = useQuery(api.admin.listAllOrders, {});
+  const lessons = useQuery(api.admin.listAllLessons, {});
+  const bookings = useQuery(api.bookings.listAllBookings, {});
+  const moderate = useMutation(api.admin.moderatePost);
+  const claimAdmin = useMutation(api.admin.claimAdmin);
+  const upsertLesson = useMutation(api.admin.upsertLesson);
+  const deleteLesson = useMutation(api.admin.deleteLesson);
+  const publishLesson = useMutation(api.admin.publishLesson);
+
+  const [tab, setTab] = useState<"overview" | "lessons" | "orders" | "moderation">("overview");
+  const [editing, setEditing] = useState<
+    | (typeof EMPTY_LESSON & { id?: Id<"lessons">; topics: string })
+    | null
+  >(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const paidRevenue = (orders ?? [])
+    .filter((o) => o.status === "paid")
+    .reduce((sum, o) => sum + o.amountCents, 0);
+
+  if (!isAuthenticated || (role !== undefined && !role.isAdmin)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader active="/admin" />
+        <NbSection className="py-20">
+          <NbBox className="nb-shadow-lg mx-auto max-w-md bg-card p-8 text-center">
+            <ShieldCheck className="mx-auto size-10" />
+            <h1 className="mt-3 text-2xl font-bold uppercase">Admin area</h1>
+            {role !== undefined && !role.isAdmin && (
+              <>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  This account isn't an admin yet. If you're the course owner
+                  and no admin exists, you can claim it once.
+                </p>
+                <NbButton
+                  className="mt-4"
+                  onClick={async () => {
+                    setError(null);
+                    try {
+                      await claimAdmin({});
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "Failed.");
+                    }
+                  }}
+                >
+                  Claim admin (first time only)
+                </NbButton>
+              </>
+            )}
+            {role === undefined && (
+              <p className="mt-2 text-sm text-muted-foreground">Checking access…</p>
+            )}
+            {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+          </NbBox>
+        </NbSection>
+      </div>
+    );
+  }
+
+  const revenue = `$${(paidRevenue / 100).toFixed(2)}`;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader active="/admin" />
+      <NbSection className="py-10">
+        <NbTag className="bg-[var(--chart-3)]">Admin</NbTag>
+        <h1 className="mt-3 text-3xl font-bold uppercase tracking-tight">
+          Manage your course
+        </h1>
+
+        {/* Tabs */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          {(
+            [
+              ["overview", "Overview", LayoutDashboard],
+              ["lessons", "Lessons", BookLock],
+              ["orders", "Orders", BadgeDollarSign],
+              ["moderation", "Moderation", Users],
+            ] as const
+          ).map(([id, label, Icon]) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={
+                "nb-border nb-press flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-widest " +
+                (tab === id ? "bg-accent" : "bg-card")
+              }
+            >
+              <Icon className="size-3.5" /> {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Overview */}
+        {tab === "overview" && (
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <NbBox className="nb-shadow bg-card p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Revenue (paid)</p>
+              <p className="mt-2 font-mono text-3xl font-bold">{revenue}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Demo checkout — flips to real money with Stripe keys.
+              </p>
+            </NbBox>
+            <NbBox className="nb-shadow bg-card p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Orders</p>
+              <p className="mt-2 font-mono text-3xl font-bold">{orders?.length ?? 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {(orders ?? []).filter((o) => o.status === "paid").length} paid ·{" "}
+                {(orders ?? []).filter((o) => o.status === "pending").length} pending
+              </p>
+            </NbBox>
+            <NbBox className="nb-shadow bg-card p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Sessions booked</p>
+              <p className="mt-2 font-mono text-3xl font-bold">{bookings?.length ?? 0}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {(bookings ?? []).filter((b) => b.status === "confirmed").length} upcoming
+              </p>
+            </NbBox>
+          </div>
+        )}
+
+        {/* Lessons manager */}
+        {tab === "lessons" && (
+          <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_380px]">
+            <div className="space-y-2">
+              {(lessons ?? [])
+                .sort((a, b) => a.order - b.order)
+                .map((l) => (
+                  <NbBox key={l._id} className="flex flex-wrap items-center justify-between gap-2 bg-card px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold uppercase leading-tight">{l.title}</p>
+                      <p className="font-mono text-[11px] text-muted-foreground">
+                        /{l.slug} · ${((l.priceCents) / 100).toFixed(0)} · {l.minutes}min ·{" "}
+                        {l.isPublished ? "published" : "draft"}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <NbButton
+                        variant="ghost"
+                        className="px-2 py-1 text-[10px]"
+                        onClick={() =>
+                          setEditing({
+                            id: l._id,
+                            slug: l.slug,
+                            title: l.title,
+                            tagline: l.tagline,
+                            description: l.description,
+                            level: l.level,
+                            priceCents: l.priceCents,
+                            isFree: l.isFree,
+                            isPublished: l.isPublished,
+                            minutes: l.minutes,
+                            topics: l.topics.join(", "),
+                            order: l.order,
+                          })
+                        }
+                      >
+                        Edit
+                      </NbButton>
+                      <NbButton
+                        variant={l.isPublished ? "ghost" : "accent"}
+                        className="px-2 py-1 text-[10px]"
+                        onClick={() => void publishLesson({ id: l._id, isPublished: !l.isPublished })}
+                      >
+                        {l.isPublished ? "Unpublish" : "Publish"}
+                      </NbButton>
+                      <NbButton
+                        variant="ghost"
+                        className="px-2 py-1 text-[10px]"
+                        onClick={() => void deleteLesson({ id: l._id })}
+                      >
+                        Delete
+                      </NbButton>
+                    </div>
+                  </NbBox>
+                ))}
+            </div>
+
+            {/* Lesson editor */}
+            <NbBox className="h-fit bg-card p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                {editing?.id ? "Edit lesson" : "New lesson"}
+              </p>
+              <div className="mt-3 grid gap-2">
+                <input
+                  className="nb-border bg-background px-2.5 py-1.5 text-sm"
+                  placeholder="slug (e.g. my-module)"
+                  value={editing?.slug ?? ""}
+                  onChange={(e) => setEditing((s) => s && { ...s, slug: e.target.value })}
+                />
+                <input
+                  className="nb-border bg-background px-2.5 py-1.5 text-sm"
+                  placeholder="Title"
+                  value={editing?.title ?? ""}
+                  onChange={(e) => setEditing((s) => s && { ...s, title: e.target.value })}
+                />
+                <input
+                  className="nb-border bg-background px-2.5 py-1.5 text-sm"
+                  placeholder="Tagline"
+                  value={editing?.tagline ?? ""}
+                  onChange={(e) => setEditing((s) => s && { ...s, tagline: e.target.value })}
+                />
+                <textarea
+                  className="nb-border bg-background px-2.5 py-1.5 text-sm"
+                  rows={3}
+                  placeholder="Description"
+                  value={editing?.description ?? ""}
+                  onChange={(e) => setEditing((s) => s && { ...s, description: e.target.value })}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    className="nb-border bg-background px-2 py-1.5 text-sm"
+                    value={editing?.level ?? "beginner"}
+                    onChange={(e) =>
+                      setEditing((s) => s && { ...s, level: e.target.value as (typeof LEVELS)[number] })
+                    }
+                  >
+                    {LEVELS.map((l) => (
+                      <option key={l} value={l}>{l}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    className="nb-border bg-background px-2.5 py-1.5 text-sm"
+                    placeholder="minutes"
+                    value={editing?.minutes ?? 45}
+                    onChange={(e) => setEditing((s) => s && { ...s, minutes: Number(e.target.value) })}
+                  />
+                  <input
+                    type="number"
+                    className="nb-border bg-background px-2.5 py-1.5 text-sm"
+                    placeholder="price cents"
+                    value={editing?.priceCents ?? 2900}
+                    onChange={(e) => setEditing((s) => s && { ...s, priceCents: Number(e.target.value) })}
+                  />
+                  <input
+                    type="number"
+                    className="nb-border bg-background px-2.5 py-1.5 text-sm"
+                    placeholder="order"
+                    value={editing?.order ?? 10}
+                    onChange={(e) => setEditing((s) => s && { ...s, order: Number(e.target.value) })}
+                  />
+                </div>
+                <input
+                  className="nb-border bg-background px-2.5 py-1.5 text-sm"
+                  placeholder="topics (comma-separated)"
+                  value={editing?.topics ?? ""}
+                  onChange={(e) => setEditing((s) => s && { ...s, topics: e.target.value })}
+                />
+                <div className="flex gap-3 text-sm">
+                  <label className="flex items-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      checked={editing?.isFree ?? false}
+                      onChange={(e) => setEditing((s) => s && { ...s, isFree: e.target.checked })}
+                    />
+                    Free
+                  </label>
+                  <label className="flex items-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      checked={editing?.isPublished ?? false}
+                      onChange={(e) => setEditing((s) => s && { ...s, isPublished: e.target.checked })}
+                    />
+                    Published
+                  </label>
+                </div>
+                <div className="flex gap-2">
+                  <NbButton
+                    onClick={async () => {
+                      if (!editing) return;
+                      setError(null);
+                      try {
+                        await upsertLesson({
+                          id: editing.id,
+                          slug: editing.slug.trim(),
+                          title: editing.title.trim(),
+                          tagline: editing.tagline.trim(),
+                          description: editing.description.trim(),
+                          level: editing.level,
+                          priceCents: editing.priceCents,
+                          isFree: editing.isFree,
+                          isPublished: editing.isPublished,
+                          minutes: editing.minutes,
+                          topics: editing.topics.split(",").map((t) => t.trim()).filter(Boolean),
+                          order: editing.order,
+                        });
+                        setEditing(null);
+                      } catch (e) {
+                        setError(e instanceof Error ? e.message : "Save failed.");
+                      }
+                    }}
+                  >
+                    Save lesson
+                  </NbButton>
+                  <NbButton variant="ghost" onClick={() => setEditing(null)}>
+                    Cancel
+                  </NbButton>
+                </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+              </div>
+            </NbBox>
+          </div>
+        )}
+
+        {/* Orders */}
+        {tab === "orders" && (
+          <div className="mt-6 space-y-2">
+            {(orders ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">No orders yet.</p>
+            )}
+            {(orders ?? [])
+              .sort((a, b) => b.createdAt - a.createdAt)
+              .map((o) => (
+                <NbBox key={o._id} className="flex items-center justify-between bg-card px-4 py-2.5">
+                  <p className="font-mono text-sm">
+                    {o.lessonSlug} · ${(o.amountCents / 100).toFixed(2)} ·{" "}
+                    {new Date(o.createdAt).toLocaleDateString()}
+                  </p>
+                  <NbTag
+                    className={
+                      o.status === "paid"
+                        ? "bg-[var(--chart-2)]"
+                        : o.status === "pending"
+                          ? "bg-accent"
+                          : "bg-muted"
+                    }
+                  >
+                    {o.status}
+                  </NbTag>
+                </NbBox>
+              ))}
+          </div>
+        )}
+
+        {/* Moderation */}
+        {tab === "moderation" && (
+          <div className="mt-6 space-y-3">
+            {(pending ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Nothing waiting for review. Nice.
+              </p>
+            )}
+            {(pending ?? []).map((p) => (
+              <NbBox key={p._id} className="bg-card p-4">
+                <p className="font-bold uppercase">{p.title}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{p.description}</p>
+                {p.url && (
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block text-xs underline">
+                    {p.url}
+                  </a>
+                )}
+                <div className="mt-3 flex gap-2">
+                  <NbButton onClick={() => void moderate({ postId: p._id, approve: true })}>
+                    Approve
+                  </NbButton>
+                  <NbButton
+                    variant="ghost"
+                    onClick={() => void moderate({ postId: p._id, approve: false })}
+                  >
+                    Reject
+                  </NbButton>
+                </div>
+              </NbBox>
+            ))}
+          </div>
+        )}
+      </NbSection>
+    </div>
+  );
+}

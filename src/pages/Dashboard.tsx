@@ -1,12 +1,19 @@
 /**
- * Dashboard — the learner's home base. Shows lesson progress and a big
- * "continue" CTA into the lesson. Neobrutalism Minimalism styling.
+ * Dashboard — the learner's home base: interactive-lesson progress, owned
+ * modules, upcoming sessions, and shortcuts into everything else.
  */
-import { Link, useNavigate } from "react-router";
-import { BookOpen, LogOut, Map, RotateCcw, Trophy } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useNavigate } from "react-router";
+import {
+  BookOpen,
+  CalendarClock,
+  ShoppingCart,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
+import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { cn } from "@/lib/utils";
 
@@ -21,12 +28,18 @@ const STEP_TITLES = [
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const serverProgress = useQuery(api.progress.getLessonProgress, {
-    lessonId: LESSON_ID,
-  });
+  const progress = useQuery(api.progress.getLessonProgress, { lessonId: LESSON_ID });
+  const orders = useQuery(api.catalog.listMyOrders, {});
+  const bookings = useQuery(api.bookings.listMyBookings, {});
 
-  const completedCount = serverProgress?.completedSteps?.length ?? 0;
-  const done = completedCount >= 4;
+  const cancelBooking = useMutation(api.bookings.cancelBooking);
+
+  const completedCount = progress?.completedSteps?.length ?? 0;
+  const lessonDone = completedCount >= 4;
+  const paidOrders = (orders ?? []).filter((o) => o.status === "paid");
+  const upcoming = (bookings ?? [])
+    .filter((b) => b.status === "confirmed")
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
 
   const handleSignOut = async () => {
     await signOut();
@@ -34,111 +47,161 @@ export default function Dashboard() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b-2 border-border bg-secondary">
-        <NbSection className="flex items-center justify-between py-3">
-          <Link to="/" className="nb-border bg-primary px-2 py-1 text-xs font-bold uppercase text-primary-foreground">
-            Webdev × AI
-          </Link>
-          <NbButton variant="ghost" onClick={handleSignOut} className="px-3 py-1.5">
-            <LogOut className="size-4" /> Sign out
-          </NbButton>
-        </NbSection>
-      </header>
-
+    <div className="min-h-screen bg-background">
+      <SiteHeader active="/dashboard" />
       <NbSection className="py-10">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <NbTag className="bg-accent">Learner dashboard</NbTag>
-            <h1 className="mt-3 text-3xl font-bold uppercase tracking-tight sm:text-4xl">
-              Welcome{user?.name ? `, ${user.name}` : " back"}
-            </h1>
-          </div>
-        </div>
+        <NbTag className="bg-accent">Learner dashboard</NbTag>
+        <h1 className="mt-3 text-3xl font-bold uppercase tracking-tight sm:text-4xl">
+          Welcome{user?.name ? `, ${user.name}` : " back"}
+        </h1>
 
-        {/* Lesson progress card */}
-        <NbBox className="nb-shadow-lg mt-8 bg-card p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="nb-border flex size-10 items-center justify-center bg-accent">
-                <BookOpen className="size-5" />
-              </span>
-              <div>
-                <h2 className="text-lg font-bold uppercase">
-                  Lesson 1 · Web development with AI
-                </h2>
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                  4 steps · ~15 min · beginner
+        {/* Top grid: lesson + bookings */}
+        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          {/* Free lesson progress */}
+          <NbBox className="nb-shadow-lg bg-card p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="nb-border flex size-10 items-center justify-center bg-accent">
+                  <BookOpen className="size-5" />
+                </span>
+                <div>
+                  <h2 className="font-bold uppercase leading-tight">
+                    Free interactive lesson
+                  </h2>
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                    4 steps · ~15 min
+                  </p>
+                </div>
+              </div>
+              <NbRouterLink
+                to="/lesson"
+                variant={lessonDone ? "ghost" : "accent"}
+                className="shrink-0 text-xs"
+              >
+                {lessonDone ? "Replay" : completedCount > 0 ? "Continue" : "Start"}
+              </NbRouterLink>
+            </div>
+            <div className="mt-4 space-y-1.5">
+              {STEP_TITLES.map((t, i) => {
+                const done = progress?.completedSteps?.includes(i) ?? false;
+                return (
+                  <div
+                    key={t}
+                    className={cn(
+                      "nb-border flex items-center gap-2 px-2.5 py-1.5 text-sm",
+                      done ? "bg-[var(--chart-2)]" : "bg-background",
+                    )}
+                  >
+                    <span className="font-mono text-xs font-bold">
+                      {done ? "✓" : i + 1}
+                    </span>
+                    {t}
+                  </div>
+                );
+              })}
+            </div>
+            {lessonDone && (
+              <div className="nb-border mt-4 flex items-center gap-2 bg-accent px-3 py-2">
+                <Trophy className="size-4" />
+                <p className="text-sm font-bold uppercase">
+                  Lesson 1 complete — certificate earned!
                 </p>
               </div>
-            </div>
-            <NbRouterLink
-              to="/lesson"
-              variant={done ? "ghost" : "accent"}
-            >
-              {done ? (
-                <>
-                  <RotateCcw className="size-4" /> Replay
-                </>
-              ) : completedCount > 0 ? (
-                "Continue lesson"
-              ) : (
-                "Start lesson"
-              )}
-            </NbRouterLink>
-          </div>
-
-          {/* Step checklist */}
-          <div className="mt-6 grid gap-2 sm:grid-cols-2">
-            {STEP_TITLES.map((t, i) => {
-              const isDone = serverProgress?.completedSteps?.includes(i) ?? false;
-              return (
-                <div
-                  key={t}
-                  className={cn(
-                    "nb-border flex items-center gap-2 px-3 py-2 text-sm font-medium",
-                    isDone ? "bg-[var(--chart-2)]" : "bg-background",
-                  )}
-                >
-                  <span className="font-mono text-xs font-bold">
-                    {isDone ? "✓" : i + 1}
-                  </span>
-                  {t}
-                </div>
-              );
-            })}
-          </div>
-
-          {done && (
-            <div className="nb-border mt-6 flex items-center gap-2 bg-accent px-3 py-2">
-              <Trophy className="size-4" />
-              <p className="text-sm font-bold uppercase">
-                Lesson 1 complete — certificate earned!
-              </p>
-            </div>
-          )}
-        </NbBox>
-
-        {/* What's next */}
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <NbBox className="bg-secondary p-5">
-            <Map className="size-5" />
-            <h3 className="mt-2 text-base font-bold uppercase">Coming in v2</h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              More lessons are being drafted: writing better prompts, adding
-              images, and publishing your site to a real address.
-            </p>
+            )}
           </NbBox>
-          <NbBox className="bg-secondary p-5">
-            <Trophy className="size-5" />
-            <h3 className="mt-2 text-base font-bold uppercase">Your goal</h3>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Finish Lesson 1 to earn your certificate. Then build one more
-              page for something you actually care about.
-            </p>
+
+          {/* Upcoming sessions */}
+          <NbBox className="nb-shadow-lg bg-card p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="nb-border flex size-10 items-center justify-center bg-[var(--chart-3)]">
+                  <CalendarClock className="size-5" />
+                </span>
+                <div>
+                  <h2 className="font-bold uppercase leading-tight">Your sessions</h2>
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                    1:1 with your instructor
+                  </p>
+                </div>
+              </div>
+              <NbRouterLink to="/catalog" variant="ghost" className="shrink-0 text-xs">
+                Book more
+              </NbRouterLink>
+            </div>
+            <div className="mt-4 space-y-2">
+              {upcoming.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No sessions booked yet. Pick any module and choose "book a
+                  live session."
+                </p>
+              ) : (
+                upcoming.slice(0, 4).map((b) => (
+                  <div
+                    key={b._id}
+                    className="nb-border flex items-center justify-between bg-background px-2.5 py-2 text-sm"
+                  >
+                    <span>
+                      <strong>{b.date}</strong> · {b.time} · {b.lessonSlug}
+                    </span>
+                    <button
+                      onClick={() => void cancelBooking({ bookingId: b._id })}
+                      className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground underline hover:text-destructive"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </NbBox>
         </div>
+
+        {/* Owned modules */}
+        <h2 className="mt-10 text-xl font-bold uppercase tracking-tight">
+          Your modules
+        </h2>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <NbRouterLink
+            to="/catalog"
+            variant="ghost"
+            className="flex flex-col items-start justify-center gap-2 p-5"
+          >
+            <Sparkles className="size-5" />
+            <p className="text-sm font-bold uppercase">Browse the catalog</p>
+            <p className="text-xs text-muted-foreground">
+              Free and paid modules, searchable.
+            </p>
+          </NbRouterLink>
+          {paidOrders.length === 0 ? (
+            <NbBox className="bg-card p-5 sm:col-span-2">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="size-4" />
+                <p className="text-sm font-bold uppercase">No purchases yet</p>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Modules you buy appear here with lifetime access. Checkout is
+                currently in demo mode — nothing is charged.
+              </p>
+            </NbBox>
+          ) : (
+            paidOrders.map((o) => (
+              <NbRouterLink
+                key={o._id}
+                to={`/catalog/${o.lessonSlug}`}
+                className="flex flex-col p-5"
+              >
+                <NbTag className="bg-[var(--chart-2)] self-start">Owned</NbTag>
+                <p className="mt-2 text-sm font-bold uppercase leading-tight">
+                  {o.lessonSlug}
+                </p>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">
+                  ${(o.amountCents / 100).toFixed(2)} · open module →
+                </p>
+              </NbRouterLink>
+            ))
+          )}
+        </div>
       </NbSection>
-    </main>
+    </div>
   );
 }

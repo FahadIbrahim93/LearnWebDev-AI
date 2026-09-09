@@ -196,7 +196,7 @@ function LessonTopBar({ onHome }: { onHome?: () => void }) {
           >
             <span className="flex items-center gap-1.5">
               {onHome ? <ArrowLeft className="size-3" /> : <Home className="size-3" />}
-              Webdev × AI
+              Web Dev × AI
             </span>
           </NbRouterLink>
           <NbTag className="hidden sm:inline-block">Lesson 1 · The Basics</NbTag>

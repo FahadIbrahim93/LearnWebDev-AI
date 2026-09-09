@@ -16,23 +16,39 @@ export const roleValidator = v.union(
 );
 export type Role = Infer<typeof roleValidator>;
 
+const levelValidator = v.union(
+  v.literal("beginner"),
+  v.literal("intermediate"),
+  v.literal("advanced"),
+);
+
+const orderStatusValidator = v.union(
+  v.literal("pending"),
+  v.literal("paid"),
+  v.literal("cancelled"),
+);
+
+const bookingStatusValidator = v.union(
+  v.literal("confirmed"),
+  v.literal("cancelled"),
+);
+
 const schema = defineSchema(
   {
     // default auth tables using convex auth.
     ...authTables, // do not remove or modify
 
-    // the users table is the default users table that is brought in by the authTables
     users: defineTable({
-      name: v.optional(v.string()), // name of the user. do not remove
-      image: v.optional(v.string()), // image of the user. do not remove
-      email: v.optional(v.string()), // email of the user. do not remove
-      emailVerificationTime: v.optional(v.number()), // email verification time. do not remove
-      isAnonymous: v.optional(v.boolean()), // is the user anonymous. do not remove
+      name: v.optional(v.string()),
+      image: v.optional(v.string()),
+      email: v.optional(v.string()),
+      emailVerificationTime: v.optional(v.number()),
+      isAnonymous: v.optional(v.boolean()),
+      role: v.optional(roleValidator),
+      isAdmin: v.optional(v.boolean()),
+    }).index("email", ["email"]),
 
-      role: v.optional(roleValidator), // role of the user. do not remove
-    }).index("email", ["email"]), // index for the email. do not remove or modify
-
-    // lesson progress for signed-in learners
+    // lesson progress for the interactive lesson
     lessonProgress: defineTable({
       userId: v.id("users"),
       lessonId: v.string(),
@@ -40,6 +56,67 @@ const schema = defineSchema(
       completedSteps: v.array(v.number()),
       updatedAt: v.number(),
     }).index("by_user_lesson", ["userId", "lessonId"]),
+
+    // purchasable catalog of course modules
+    lessons: defineTable({
+      slug: v.string(),
+      title: v.string(),
+      tagline: v.string(),
+      description: v.string(),
+      level: levelValidator,
+      priceCents: v.number(),
+      isFree: v.boolean(),
+      isPublished: v.boolean(),
+      minutes: v.number(),
+      topics: v.array(v.string()),
+      order: v.number(),
+    })
+      .index("by_slug", ["slug"])
+      .index("by_published", ["isPublished"]),
+
+    // one-time purchases
+    orders: defineTable({
+      userId: v.id("users"),
+      lessonSlug: v.string(),
+      amountCents: v.number(),
+      status: orderStatusValidator,
+      provider: v.optional(v.string()), // "demo" | "stripe"
+      stripeSessionId: v.optional(v.string()),
+      createdAt: v.number(),
+    })
+      .index("by_user", ["userId"])
+      .index("by_session", ["stripeSessionId"]),
+
+    // 1:1 mentor session bookings
+    bookings: defineTable({
+      userId: v.id("users"),
+      lessonSlug: v.string(),
+      date: v.string(), // YYYY-MM-DD
+      time: v.string(), // HH:MM (24h)
+      note: v.optional(v.string()),
+      status: bookingStatusValidator,
+      createdAt: v.number(),
+    })
+      .index("by_user", ["userId"])
+      .index("by_date", ["date"]),
+
+    // student builds
+    showcase: defineTable({
+      userId: v.id("users"),
+      title: v.string(),
+      url: v.optional(v.string()),
+      description: v.string(),
+      approved: v.boolean(),
+      createdAt: v.number(),
+    }).index("by_approved", ["approved"]),
+
+    // comments on showcase posts
+    comments: defineTable({
+      postId: v.id("showcase"),
+      userId: v.id("users"),
+      body: v.string(),
+      createdAt: v.number(),
+    }).index("by_post", ["postId"]),
   },
   {
     schemaValidation: false,
