@@ -57,13 +57,13 @@ export function Step3({
       /cafe|coffee|gym|dog|cat|groom|barber|salon|bakery|pastry|bread|shop|store|studio|clinic/i.test(raw);
     const hasVibe =
       /warm|friendly|cozy|minimal|bold|bright|dark|calm|pink|blue|green|neon|retro|modern|clean|fun|fancy|simple/i.test(raw);
-    const wordCount = raw.split(/\\s+/).filter(Boolean).length;
+    const wordCount = raw.split(/\s+/).filter(Boolean).length;
     const vibeGuess =
       hasVibe
         ? Array.from(
             new Set(
               raw
-                .split(/\\s+/)
+                .split(/\s+/)
                 .filter(
                   (w) =>
                     /warm|friendly|cozy|minimal|bold|bright|dark|calm|pink|blue|green|neon|retro|modern|clean|fun|fancy|simple/i.test(w),
