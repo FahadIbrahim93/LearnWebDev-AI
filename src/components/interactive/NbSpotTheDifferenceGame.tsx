@@ -1,1 +1,148 @@
-/**\n * Spot-the-difference: a short document review game.\n * Learners read a weak page draft, then flag the fixes that would actually\n * improve it. Neobrutalist flat blocks, 2px borders, honest feedback.\n *\n * Fits modules like content/copy, launch checks, or site-structure review,\n * where the teaching is "distance yourself from the page and edit it like\n * a stranger would read it."\n */\nimport { useState } from "react";\nimport { Check, RotateCcw, X } from "lucide-react\";\nimport { cn } from \"@/lib/utils\";\nimport { GameButton, GameFeedback } from \"./games\";\n\nexport function NbSpotTheDifferenceGame({\n  prompt,\n  badDocument,\n  fixes,\n  onSolved,\n  solvedText,\n}: {\n  prompt: string;\n  badDocument: string;\n  fixes: { label: string; text: string; correct: boolean }[];\n  onSolved: () => void;\n  solvedText: string;\n}) {\n  const [picked, setPicked] = useState<Set<number>>(new Set());\n  const [checked, setChecked] = useState(false);\n\n  const pass =\n    fixes.every((f, i) => (f.correct ? picked.has(i) : !picked.has(i)));\n  const solved = checked && pass;\n  const wrong = checked && !pass;\n\n  return (\n    <div>\n      <p className=\"text-sm font-medium\">{prompt}</p>\n\n      {/* The weak page draft, shown as a small artifact to review */}\n      <div className=\"mt-3 nb-border bg-secondary p-4\">\n        <p className=\"text-[10px] font-bold uppercase tracking-widest text-muted-foreground\">\n          The page, as drafted\n        </p>\n        <pre className=\"mt-1 font-mono text-xs leading-relaxed whitespace-pre-wrap\">\n          {badDocument}\n        </pre>\n      </div>\n\n      <p className=\"mt-3 text-xs text-muted-foreground\">\n        Which fixes would actually improve this page? Flag the right ones.\n      </p>\n\n      <div className=\"mt-3 grid gap-2 sm:grid-cols-2\">\n        {fixes.map((fix, i) => {\n          const on = picked.has(i);\n          const shouldBeOn = fix.correct;\n          return (\n            <button\n              key={fix.label}\n              onClick={() => {\n                if (solved) return;\n                setChecked(false);\n                setPicked((cur) => {\n                  const next = new Set(cur);\n                  if (next.has(i)) next.delete(i);\n                  else next.add(i);\n                  return next;\n                });\n              }}\n              className={cn(\n                \"nb-border nb-press flex items-center justify-between gap-2 px-3 py-2 text-left text-sm\",\n                !on && \"bg-card\",\n                on && !checked && \"bg-accent\",\n                checked && on && shouldBeOn && \"bg-[var(--chart-2)]\",\n                checked && on && !shouldBeOn && \"nb-shake bg-destructive text-white\",\n                checked && !on && shouldBeOn && \"bg-[var(--chart-4)]\",\n              )}\n            >\n              <span>{fix.label}</span>\n              <span className=\"nb-border flex size-5 shrink-0 items-center justify-center bg-background font-mono text-[10px] font-bold\">\n                {checked ? (\n                  shouldBeOn ? (\n                    <Check className=\"size-3\" />\n                  ) : (\n                    <X className=\"size-3\" />\n                  )\n                ) : on ? (\n                  \"✓\"\n                ) : (\n                  \"\"\n                )}\n              </span>\n            </button>\n          );\n        })}\n      </div>\n\n      {!solved && (\n        <div className=\"mt-3 flex gap-2\">\n          <GameButton\n            onClick={() => {\n              setChecked(true);\n              if (fixes.every((f, i) => (f.correct ? picked.has(i) : !picked.has(i)))) {\n                onSolved();\n              }\n            }}\n          >\n            Review my fixes\n          </GameButton>\n          <GameButton\n            tone=\"plain\"\n            onClick={() => {\n              setPicked(new Set());\n              setChecked(false);\n            }}\n          >\n            <RotateCcw className=\"mr-1 inline size-3\" /> Reset\n          </GameButton>\n        </div>\n      )}\n\n      <GameFeedback\n        wrong={wrong}\n        wrongText=\"Some flagged fixes don't belong — the red ones should be left alone. Review, then re-check.\"\n        solved={solved}\n        solvedText={solvedText}\n      />\n      {solved && (\n        <ul className=\"mt-2 space-y-1 text-xs text-muted-foreground\">\n          {fixes.map((fix, i) => (\n            <li key={i} className=\"flex items-start gap-2\">\n              <span className={cn(\n                \"shrink-0 mt-0.5 text-[10px] font-bold uppercase\",\n                fix.correct\n                  ? \"text-[var(--chart-2)]\"\n                  : \"text-muted-foreground/60\",\n              )}>\n                {fix.correct ? \"keep\" : \"leave\"}\n              </span>\n              <span>{fix.text}</span>\n            </li>\n          ))}\n        </ul>\n      )}\n    </div>\n  );\n}\n
+/** Spot-the-difference: a short document review game.
+ * Learners read a weak page draft, then flag the fixes that would actually
+ * improve it. Neobrutalist flat blocks, 2px borders, honest feedback.
+ *
+ * Fits modules like content/copy, launch checks, or site-structure review,
+ * where the teaching is "distance yourself from the page and edit it like
+ * a stranger would read it."
+ */
+import { useState } from "react";
+import { Check, RotateCcw, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { GameButton, GameFeedback } from "./games";
+
+
+export function NbSpotTheDifferenceGame({
+  prompt,
+  badDocument,
+  fixes,
+  onSolved,
+  solvedText,
+}: {
+  prompt: string;
+  badDocument: string;
+  fixes: { label: string; text: string; correct: boolean }[];
+  onSolved: () => void;
+  solvedText: string;
+}) {
+  const [picked, setPicked] = useState<Set<number>>(new Set());
+  const [checked, setChecked] = useState(false);
+
+  const pass =
+    fixes.every((f, i) => (f.correct ? picked.has(i) : !picked.has(i)));
+  const solved = checked && pass;
+  const wrong = checked && !pass;
+
+  return (
+    <div>
+      <p className="text-sm font-medium">{prompt}</p>
+
+      {/* The weak page draft, shown as a small artifact to review */}
+      <div className="mt-3 nb-border bg-secondary p-4">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          The page, as drafted
+        </p>
+        <pre className="mt-1 font-mono text-xs leading-relaxed whitespace-pre-wrap">
+          {badDocument}
+        </pre>
+      </div>
+
+      <p className="mt-3 text-xs text-muted-foreground">
+        Which fixes would actually improve this page? Flag the right ones.
+      </p>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {fixes.map((fix, i) => {
+          const on = picked.has(i);
+          const shouldBeOn = fix.correct;
+          return (
+            <button
+              key={fix.label}
+              onClick={() => {
+                if (solved) return;
+                setChecked(false);
+                setPicked((cur) => {
+                  const next = new Set(cur);
+                  if (next.has(i)) next.delete(i);
+                  else next.add(i);
+                  return next;
+                });
+              }}
+              className={cn(
+                "nb-border nb-press flex items-center justify-between gap-2 px-3 py-2 text-left text-sm",
+                !on && "bg-card",
+                on && !checked && "bg-accent",
+                checked && on && shouldBeOn && "bg-[var(--chart-2)]",
+                checked && on && !shouldBeOn && "nb-shake bg-destructive text-white",
+                checked && !on && shouldBeOn && "bg-[var(--chart-4)]"
+              )}
+            >
+              <span>{fix.label}</span>
+              <span className="nb-border flex size-5 shrink-0 items-center justify-center bg-background font-mono text-[10px] font-bold">
+                {checked ? (
+                  shouldBeOn ? (
+                    <Check className="size-3" />
+                  ) : (
+                    <X className="size-3" />
+                  )
+                ) : on ? (
+                  "✓"
+                ) : (
+                  ""
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {!solved && (
+        <div className="mt-3 flex gap-2">
+          <GameButton
+            onClick={() => {
+              setChecked(true);
+              if (fixes.every((f, i) => (f.correct ? picked.has(i) : !picked.has(i)))) {
+                onSolved();
+              }
+            }}
+          >
+            Review my fixes
+          </GameButton>
+          <GameButton
+            tone="plain"
+            onClick={() => {
+              setPicked(new Set());
+              setChecked(false);
+            }}
+          >
+            <RotateCcw className="mr-1 inline size-3" /> Reset
+          </GameButton>
+        </div>
+      )}
+
+      <GameFeedback
+        wrong={wrong}
+        wrongText="Some flagged fixes don't belong — the red ones should be left alone. Review, then re-check."
+        solved={solved}
+        solvedText={solvedText}
+      />
+      {solved && (
+        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+          {fixes.map((fix, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <span className={cn(
+                "shrink-0 mt-0.5 text-[10px] font-bold uppercase",
+                fix.correct
+                  ? "text-[var(--chart-2)]"
+                  : "text-muted-foreground/60"
+              )}>
+                {fix.correct ? "keep" : "leave"}
+              </span>
+              <span>{fix.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
