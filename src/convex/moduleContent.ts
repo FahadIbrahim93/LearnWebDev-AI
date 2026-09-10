@@ -291,14 +291,44 @@ export const MODULE_CONTENT: ModuleContent[] = [
         recap:
           "About pages are trust documents. Human first, history later, short always.",
         interactive: {
-          kind: "order",
-          prompt: "Structure a 120-word about page people finish. Put the three beats in order.",
-          items: [
-            { text: "Who you are — the human, not the history" },
-            { text: "What you make — plainly, with one specific detail" },
-            { text: "What it's like to work with you — one honest sentence" },
+          kind: "spot-the-difference",
+          prompt: "Here's a first draft of an about page, as a stranger would read it. Flag the fixes that would actually improve it.",
+          badDocument:
+            "Welcome to our website!\n\nFounded in 2019, we are a leading provider of quality solutions.\nWe have always been passionate about excellence, and our mission\nis to leverage synergies across every customer journey.\n\nContact us today!",
+          fixes: [
+            {
+              label: "Swap the company-first opener for a human one",
+              text: "'I started baking for my neighbors' builds trust faster than 'Founded in 2019.' Human first, history later.",
+              correct: true,
+            },
+            {
+              label: "Cut the buzzwords ('quality solutions', 'leverage synergies')",
+              text: "Nobody talks like that. Say plainly what you make and for whom.",
+              correct: true,
+            },
+            {
+              label: "Move 'Founded in 2019' to the very first line",
+              text: "No — leading with history is the draft's core mistake. The human hook goes first.",
+              correct: false,
+            },
+            {
+              label: "Say what you actually make, with one specific detail",
+              text: "'Fresh bread, baked every morning in Maplewood' beats 'quality solutions' every time.",
+              correct: true,
+            },
+            {
+              label: "Add more impressive words like 'excellence' to sound professional",
+              text: "Adjectives are not evidence. Specifics are what read as professional.",
+              correct: false,
+            },
+            {
+              label: "Make the ending a real next step",
+              text: "'You'll hear from me within one business day' beats a bare 'Contact us today!'",
+              correct: true,
+            },
           ],
-          solvedText: "Three beats, 120 words. That's a whole trustworthy about page.",
+          solvedText:
+            "Human first, plain words, one specific detail, explicit next step. That's an about page people finish.",
         },
       },
       {
