@@ -1,36 +1,9 @@
 /**
- * Theme hook for the lesson's signature interaction: AI vs Human comparison.
+ * Theme toggle for the lesson's signature interaction: AI vs Human comparison.
  * "ai" mode = digital teal/lime futuristic flat colors.
  * "human" mode = warm amber/cream flat colors.
  */
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-
 export type NbMode = "ai" | "human";
-
-const NbModeContext = createContext<NbMode>("human");
-
-export function NbModeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<NbMode>("human");
-  const value = useMemo(() => mode, [mode]);
-  return (
-    <NbModeContext.Provider value={value}>{children}</NbModeContext.Provider>
-  );
-}
-
-export function useNbMode() {
-  const mode = useContext(NbModeContext);
-  return {
-    mode,
-    isAi: mode === "ai",
-    isHuman: mode === "human",
-  };
-}
 
 /** A visible toggle rendered as a neobrutalist segmented switch. */
 export function NbModeToggle({

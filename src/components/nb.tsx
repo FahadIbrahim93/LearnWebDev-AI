@@ -26,48 +26,6 @@ export function NbSection({
 }
 
 /* ------------------------------------------------------------------ */
-/* Text helpers                                                        */
-/* ------------------------------------------------------------------ */
-
-const HEADING_CLASS = "font-bold tracking-tight leading-tight uppercase";
-
-export function NbH1({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <h1 className={cn(HEADING_CLASS, "text-3xl sm:text-5xl", className)}>
-      {children}
-    </h1>
-  );
-}
-
-export function NbH2({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <h2 className={cn(HEADING_CLASS, "text-2xl sm:text-3xl", className)}>
-      {children}
-    </h2>
-  );
-}
-
-export function NbMono({ children }: { children: ReactNode }) {
-  return (
-    <span className="font-mono font-bold [&_::selection]:bg-accent">
-      {children}
-    </span>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Border box — flat color block with hard shadow                      */
 /* ------------------------------------------------------------------ */
 
@@ -118,34 +76,6 @@ export function NbButton({
     >
       {children}
     </button>
-  );
-}
-
-export function NbLinkButton({
-  children,
-  className,
-  variant = "primary",
-  ...props
-}: ComponentProps<"a"> & {
-  variant?: "primary" | "accent" | "ghost";
-}) {
-  const variants = {
-    primary: "bg-primary text-primary-foreground",
-    accent: "bg-accent text-accent-foreground",
-    ghost: "bg-background text-foreground",
-  } as const;
-
-  return (
-    <a
-      className={cn(
-        "nb-border nb-shadow-sm nb-press inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold uppercase tracking-wide",
-        variants[variant],
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </a>
   );
 }
 
