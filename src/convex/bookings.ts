@@ -2,6 +2,18 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { enforceRateLimit, userRateLimitKey } from "./rateLimit";
+
+/** Bookable half-hour slots (24h local time). Shared with the booking UI. */
+export const BOOKING_SLOTS = [
+  "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+  "16:00", "16:30", "17:00", "17:30",
+] as const;
+
+function isValidDate(s: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s + "T00:00:00Z"));
+}
 
 /** Server-side pretty date (timezone-optional) for email copy. */
 function prettyDate(iso: string, timeZone?: string) {
@@ -83,13 +95,26 @@ export const createBooking = mutation({
     const userId = await getAuthUserId(ctx);
     if (userId === null) throw new Error("Sign in to book a session.");
 
-    const taken = await ctx.db
-      .query("bookings")
-      .withIndex("by_date", (q) => q.eq("date", args.date))
-      .collect();
-    if (taken.some((b) => b.time === args.time && b.status === "confirmed")) {
-      throw new Error("That slot was just taken — pick another.");
+    // Strict server-side validation — the UI is not the source of truth.
+    if (!isValidDate(args.date)) throw new Error("Invalid date.");
+    if (!(BOOKING_SLOTS as readonly string[]).includes(args.time)) {
+      throw new Error("Invalid time slot.");
     }
+    if (args.note && args.note.length > 500) {
+      throw new Error("Please keep the note under 500 characters.");
+    }
+    await enforceRateLimit(ctx, "booking", await userRateLimitKey(ctx));
+
+    // Atomic double-booking guard. Concurrent mutations that touch the same
+    // bookingLocks row are serialized by Convex OCC: the loser retries, sees
+    // the lock, and fails with a friendly error instead of double-booking.
+    const lock = await ctx.db
+      .query("bookingLocks")
+      .withIndex("by_date_time", (q) =>
+        q.eq("date", args.date).eq("time", args.time),
+      )
+      .unique();
+    if (lock) throw new Error("That slot was just taken — pick another.");
 
     const bookingId = await ctx.db.insert("bookings", {
       userId,
@@ -101,6 +126,10 @@ export const createBooking = mutation({
       status: "confirmed",
       createdAt: Date.now(),
     });
+
+    // Claim the slot. Written after the booking so a losing concurrent
+    // transaction re-runs the lock check above on OCC retry.
+    await ctx.db.insert("bookingLocks", { date: args.date, time: args.time });
 
     // Confirmation email — detached, never blocks or fails the booking.
     await ctx.scheduler.runAfter(0, internal.bookings.sendBookingConfirmation, {
@@ -138,6 +167,15 @@ export const cancelBooking = mutation({
     const booking = await ctx.db.get(args.bookingId);
     if (!booking || booking.userId !== userId) throw new Error("Booking not found.");
     await ctx.db.patch(args.bookingId, { status: "cancelled" });
+
+    // Free the slot again: drop its lock so someone else can book it.
+    const lock = await ctx.db
+      .query("bookingLocks")
+      .withIndex("by_date_time", (q) =>
+        q.eq("date", booking.date).eq("time", booking.time),
+      )
+      .unique();
+    if (lock) await ctx.db.delete(lock._id);
   },
 });
 
