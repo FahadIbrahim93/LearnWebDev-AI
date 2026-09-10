@@ -20,6 +20,7 @@ import {
   NbPromptBuilderGame,
   NbVibeSwitcherGame,
 } from "./games2";
+import { NbSpotTheDifferenceGame } from "./NbSpotTheDifferenceGame";
 import type { Interactive } from "@/convex/moduleContent";
 
 export function SectionActivity({
@@ -131,6 +132,15 @@ export function SectionActivity({
             question={interactive.prompt}
             options={interactive.options}
             onSolved={handleSolved}
+          />
+        )}
+        {interactive.kind === "spot-the-difference" && (
+          <NbSpotTheDifferenceGame
+            prompt={interactive.prompt}
+            badDocument={interactive.badDocument}
+            fixes={interactive.fixes}
+            onSolved={handleSolved}
+            solvedText={interactive.solvedText}
           />
         )}
       </motion.div>
