@@ -7,7 +7,7 @@
  * dispatching. The player passes `solvedAtMount` so re-visits skip the gate
  * but keep the replayable play state.
  */
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { PartyPopper } from "lucide-react";
 import { motion } from "framer-motion";
 import { NbQuiz } from "@/components/nb";
@@ -42,9 +42,13 @@ export function SectionActivity({
 
   // Re-solvable: a fresh challenge resets local solve state, and a previously
   // solved challenge still shows its "solved" banner but stays playable.
-  useEffect(() => {
+  // Adjusted during render when the section changes — the React-endorsed
+  // pattern for resetting state when a prop changes (no effect cascade).
+  const [seenKey, setSeenKey] = useState(`${slug}:${sectionIndex}`);
+  if (`${slug}:${sectionIndex}` !== seenKey) {
+    setSeenKey(`${slug}:${sectionIndex}`);
     setSolvedThisSession(solvedAtMount);
-  }, [slug, sectionIndex, solvedAtMount]);
+  }
 
   const handleSolved = () => {
     if (!firedRef.current) {

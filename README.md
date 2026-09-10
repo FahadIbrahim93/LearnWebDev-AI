@@ -7,6 +7,10 @@ themselves, with AI as their typing assistant. No coding background required.
 Built as a real, sellable product: catalog + checkout + bookings + community
 + admin, all in one app.
 
+**Design system:** Neobrutalism Minimalism — square corners, 2px black
+borders, flat color blocking, hard offset shadows, bold but controlled
+contrast, and a full dark developer-facing mode.
+
 ## What's inside
 
 ### For learners
@@ -82,6 +86,52 @@ Built as a real, sellable product: catalog + checkout + bookings + community
   background-safe server functions
 - **Stripe** — hosted checkout + signature-verified webhook fulfillment
 - **Framer Motion** — tasteful motion where it aids comprehension
+
+## Architecture & code map
+
+```
+src/
+├── components/
+│   ├── nb.tsx                    # Neobrutalism design-system primitives
+│   │                             #   (NbSection, NbBox, NbButton, NbQuiz…)
+│   ├── BrowserSim.tsx            # Fake-browser teaching widget (free lesson)
+│   ├── SiteHeader.tsx            # Shared nav + dark-mode toggle + mobile menu
+│   ├── interactive/              # 9 mini-games used across all courses
+│   │   ├── games.tsx             #   ordering + analogy matching
+│   │   ├── games2.tsx            #   pick-best, prompt builder, vibe switcher…
+│   │   ├── NbChecklistGame.tsx   #   launch-day checklist
+│   │   ├── NbSpotTheDifferenceGame.tsx
+│   │   ├── NbConfetti.tsx        #   CSS-only confetti (zero deps)
+│   │   └── SectionActivity.tsx   #   game dispatcher wiring solve→progress
+│   └── lesson/                   # Free lesson: Steps 1–4
+├── convex/                       # Backend (queries, mutations, actions)
+│   ├── schema.ts                 #   users, lessons, orders, bookings,
+│   │                             #   showcase, comments, waitlist, progress
+│   ├── moduleContent.ts          #   6 modules × 3 sections of curriculum
+│   │                             #   + per-section interactive challenge data
+│   ├── catalog.ts / stripe.ts    #   purchase flow + webhook fulfillment
+│   ├── bookings.ts / emails.ts   #   1:1 sessions + Resend transactional email
+│   ├── showcase.ts / admin.ts    #   community + owner tools
+│   └── insights.ts               #   admin analytics (funnel + engagement)
+├── pages/                        # Landing, Lesson, Catalog, CatalogItem,
+│   # CoursePlayer, Book, Showcase, Certificate, Dashboard, Admin, Auth
+├── hooks/                        # use-auth, use-nb-mode, use-page-title
+└── lib/utils.ts                  # cn() and helpers
+```
+
+**Patterns worth noting**
+- **Progress that survives devices** — local progress (per-user localStorage)
+  is union-merged with server progress on load, so signing in adds history
+  instead of overwriting it. Merge-safe writes on both ends.
+- **Challenge-gated completion** — sections can't be marked done until their
+  interactive challenge is solved, keeping the course learn-by-doing rather
+  than read-and-click-next.
+- **Graceful degradation everywhere** — missing Stripe/Resend keys fall back
+  to labeled demo mode, never errors; the product is demoable with zero keys.
+- **Dormant-by-default integrations** — paste env vars via the Keys UI and
+  live payments/email activate with no code changes.
+- **State discipline** — no setState-in-effect cascades; server data is merged
+  via derived values and the React render-adjustment pattern.
 
 ## Running locally
 ```bash

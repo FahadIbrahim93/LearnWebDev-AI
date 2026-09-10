@@ -3,7 +3,7 @@
  * what happens when you open a website. Designed for non-technical
  * learners: zero jargon in the visuals, friendly labels everywhere.
  */
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { NbTag } from "./nb";
 
@@ -28,12 +28,6 @@ export function BrowserSim({
   const step = steps[Math.min(stepIndex, steps.length - 1)];
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  // Re-trigger the pop animation on each step change.
-  const [popKey, setPopKey] = useState(0);
-  useEffect(() => {
-    setPopKey((k) => k + 1);
-  }, [stepIndex]);
-
   return (
     <div className={cn("w-full", className)}>
       {/* Browser chrome */}
@@ -56,7 +50,7 @@ export function BrowserSim({
           className="nb-grid-bg relative min-h-[240px] bg-background p-4"
           aria-live="polite"
         >
-          <div key={popKey} className="nb-pop">
+          <div key={stepIndex} className="nb-pop">
             {step?.body}
           </div>
         </div>

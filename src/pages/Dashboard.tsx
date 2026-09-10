@@ -2,9 +2,7 @@
  * Dashboard — the learner's home base: interactive-lesson progress, owned
  * modules, upcoming sessions, and shortcuts into everything else.
  */
-import { useNavigate } from "react-router";
-import {
-  Award,
+import { Award,
   BookOpen,
   CalendarClock,
   ShoppingCart,
@@ -17,7 +15,7 @@ import { getContentFor } from "@/convex/moduleContent";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { SiteHeader } from "@/components/SiteHeader";
-import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
+import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { cn } from "@/lib/utils";
 
 const LESSON_ID = "webdev-ai-v1";
@@ -38,8 +36,7 @@ function prettyDate(iso: string) {
 
 export default function Dashboard() {
   usePageTitle("Your dashboard");
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const progress = useQuery(api.progress.getLessonProgress, { lessonId: LESSON_ID });
   const orders = useQuery(api.catalog.listMyOrders, {});
   const bookings = useQuery(api.bookings.listMyBookings, {});
@@ -69,11 +66,6 @@ export default function Dashboard() {
   const upcoming = (bookings ?? [])
     .filter((b) => b.status === "confirmed")
     .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
 
   return (
     <div className="min-h-screen bg-background">

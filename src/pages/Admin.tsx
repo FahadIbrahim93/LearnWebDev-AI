@@ -24,18 +24,19 @@ import { usePageTitle } from "@/hooks/use-page-title";
 
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
-const EMPTY_LESSON = {
-  slug: "",
-  title: "",
-  tagline: "",
-  description: "",
-  level: "beginner" as (typeof LEVELS)[number],
-  priceCents: 2900,
-  isFree: false,
-  isPublished: false,
-  minutes: 45,
-  topics: "",
-  order: 10,
+/** Shape of the lesson editor form (topics is a comma-separated string). */
+type LessonDraft = {
+  slug: string;
+  title: string;
+  tagline: string;
+  description: string;
+  level: (typeof LEVELS)[number];
+  priceCents: number;
+  isFree: boolean;
+  isPublished: boolean;
+  minutes: number;
+  topics: string;
+  order: number;
 };
 
 export default function Admin() {
@@ -66,7 +67,7 @@ export default function Admin() {
   >("overview");
   const [copied, setCopied] = useState(false);
   const [editing, setEditing] = useState<
-    | (typeof EMPTY_LESSON & { id?: Id<"lessons">; topics: string })
+    | (LessonDraft & { id?: Id<"lessons"> })
     | null
   >(null);
   const [error, setError] = useState<string | null>(null);

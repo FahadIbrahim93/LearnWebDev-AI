@@ -1,7 +1,8 @@
 {
-  "name": "vite-template",
+  "name": "web-development-with-ai",
+  "description": "Interactive course platform teaching non-technical people to build professional websites with AI.",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

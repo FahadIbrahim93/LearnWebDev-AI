@@ -4,7 +4,7 @@
  * files = the dish. Learner clicks through a simulated browser journey.
  */
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, ChefHat, Monitor } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChefHat } from "lucide-react";
 import { BrowserSim, type BrowserSimStep } from "@/components/BrowserSim";
 import { cn } from "@/lib/utils";
 import {

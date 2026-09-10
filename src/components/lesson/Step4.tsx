@@ -4,7 +4,7 @@
  * a mini site assemble live. "Regenerate" shows how AI iterates.
  */
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, RotateCcw, Sparkles } from "lucide-react";
+import { RotateCcw, Sparkles } from "lucide-react";
 import {
   NbBox,
   NbButton,

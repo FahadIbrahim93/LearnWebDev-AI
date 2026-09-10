@@ -5,6 +5,7 @@
  */
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useState } from "react";
+// (menu closes via explicit onClick handlers — no route-change effect needed)
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { NbButton, NbSection } from "./nb";
@@ -30,11 +31,6 @@ export function SiteHeader({ active }: { active?: string }) {
     window.localStorage.setItem("nb-theme", dark ? "dark" : "light");
   }, [dark]);
 
-  // Close the mobile menu whenever the route changes (any link click).
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [active]);
-
   const handleSignOut = async () => {
     setMenuOpen(false);
     await signOut();
@@ -53,6 +49,7 @@ export function SiteHeader({ active }: { active?: string }) {
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main">
+          {/* Desktop nav — no menu state to reset */}
           {NAV.map((item) => (
             <Link
               key={item.to}

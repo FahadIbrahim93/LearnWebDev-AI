@@ -58,18 +58,14 @@ export default function Lesson() {
 
   // Server progress seeds the step once (first load only) so it never yanks
   // the learner back mid-session. Local navigation always wins afterwards.
+  // Adjusted during render (React-endorsed pattern for deriving state from
+  // async data) instead of setState-inside-useMemo, which can loop.
   const [seededFromServer, setSeededFromServer] = useState(false);
-  const effectiveStep = useMemo(() => {
-    if (
-      !seededFromServer &&
-      serverProgress &&
-      serverProgress.step > step
-    ) {
-      setSeededFromServer(true);
-      return serverProgress.step;
-    }
-    return step;
-  }, [step, serverProgress, seededFromServer]);
+  if (!seededFromServer && serverProgress && serverProgress.step > step) {
+    setSeededFromServer(true);
+    setStep(serverProgress.step);
+  }
+  const effectiveStep = step;
 
   const persist = useCallback(
     (nextStep: number, nextCompleted: Set<number>) => {

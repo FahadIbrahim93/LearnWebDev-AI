@@ -26,7 +26,6 @@ export default function CatalogItem() {
   const startCheckout = useMutation(api.catalog.startCheckout);
   const startCheckoutAction = useAction(api.stripe.startCheckoutAction);
   const completeDemo = useMutation(api.catalog.completeDemoCheckout);
-  const cancelOrder = useMutation(api.catalog.cancelOrder);
 
   const [checkoutState, setCheckoutState] = useState<
     "idle" | "pending" | "paid" | "error"
@@ -85,12 +84,6 @@ export default function CatalogItem() {
       setCheckoutState("error");
     }
   };
-
-  const handleCancel = async () => {
-    // Demo mode: just reset the UI state.
-    setCheckoutState("idle");
-  };
-  void cancelOrder;
 
   const price = lesson
     ? lesson.isFree

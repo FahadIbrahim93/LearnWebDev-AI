@@ -38,6 +38,15 @@ function readIdSet(key: string): Set<number> {
   }
 }
 
+/** Reads done + solved for a key pair. A pre-solved section (from before
+ *  challenges existed) counts as solved too — replaying is always allowed. */
+function readProgress(doneKey: string, solvedKey: string) {
+  const done = readIdSet(doneKey);
+  const solved = readIdSet(solvedKey);
+  for (const i of done) solved.add(i);
+  return { done, solved };
+}
+
 function writeIdSet(key: string, set: Set<number>) {
   window.localStorage.setItem(key, JSON.stringify([...set]));
 }
@@ -57,59 +66,46 @@ export default function CoursePlayer() {
   const uid = user?._id ?? "anon";
 
   // `done` = sections marked complete; `solved` = challenges beaten.
-  // Keyed per user; reload when the signed-in user resolves.
+  // Local state is keyed per user (device storage); server rows are merged
+  // in derived below, so switching devices adds progress instead of losing it.
   const doneKey = `${uid}.module.${slug}.done`;
   const solvedKey = `${uid}.module.${slug}.solved`;
-  const [done, setDone] = useState<Set<number>>(new Set());
-  const [solved, setSolved] = useState<Set<number>>(new Set());
-  const [loaded, setLoaded] = useState(false);
+  const [progressKeys, setProgressKeys] = useState({ doneKey, solvedKey });
+  const [local, setLocal] = useState(() => readProgress(doneKey, solvedKey));
 
-  useEffect(() => {
-    // Back-compat: learners who finished sections before challenges existed
-    // keep their checkmarks (a pre-solved section counts as solved too —
-    // replaying is always allowed).
-    const prevDone = readIdSet(doneKey);
-    const prevSolved = readIdSet(solvedKey);
-    const mergedSolved = new Set(prevSolved);
-    for (const i of prevDone) mergedSolved.add(i);
-    setDone(prevDone);
-    setSolved(mergedSolved);
-    setLoaded(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doneKey, solvedKey]);
+  // The signed-in user (and therefore the storage key) can resolve after the
+  // first render — re-read storage during render when the key changes, the
+  // React-endorsed pattern for resetting state when a key identity changes.
+  if (doneKey !== progressKeys.doneKey || solvedKey !== progressKeys.solvedKey) {
+    setProgressKeys({ doneKey, solvedKey });
+    setLocal(readProgress(doneKey, solvedKey));
+  }
 
-  // Server hydration (signed-in only): union with local so switching devices
-  // adds progress instead of losing it. Runs once per user+module.
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => {
-    if (hydrated || !serverProgress) return;
-    setDone((prev) => {
-      const next = new Set(prev);
-      for (const s of serverProgress.doneSections) next.add(s);
-      return next;
-    });
-    setSolved((prev) => {
-      const next = new Set(prev);
-      for (const s of serverProgress.solvedSections) next.add(s);
-      return next;
-    });
-    setHydrated(true);
-  }, [serverProgress, hydrated]);
+  // Effective progress = local ∪ server (signed-in). Merge-safe both ways.
+  const done = useMemo(() => {
+    const merged = new Set(local.done);
+    for (const s of serverProgress?.doneSections ?? []) merged.add(s);
+    return merged;
+  }, [local.done, serverProgress]);
+  const solved = useMemo(() => {
+    const merged = new Set(local.solved);
+    for (const s of serverProgress?.solvedSections ?? []) merged.add(s);
+    return merged;
+  }, [local.solved, serverProgress]);
 
-  // Save-through: whenever local progress changes (and we're signed in with
-  // hydration settled), push the union up. Merge-safe on the server too.
+  // Save-through: whenever local progress changes (and we're signed in),
+  // push it up. The server merge is a union, so this is idempotent.
   const savePayload = useMemo(
-    () => ({ moduleSlug: slug, doneSections: [...done], solvedSections: [...solved] }),
-    [slug, done, solved],
+    () => ({ moduleSlug: slug, doneSections: [...local.done], solvedSections: [...local.solved] }),
+    [slug, local.done, local.solved],
   );
   useEffect(() => {
-    if (!hydrated || !user) return;
+    if (!user) return;
     void saveProgress(savePayload);
-  }, [savePayload, hydrated, user, saveProgress]);
+  }, [savePayload, user, saveProgress]);
 
   const [section, setSection] = useState(0);
   const [gateShake, setGateShake] = useState(0);
-  const [finishBurst, setFinishBurst] = useState(0);
 
   // Jump back to the top when the section changes so the new section title
   // is what you see, not the middle of the previous one.
@@ -118,18 +114,18 @@ export default function CoursePlayer() {
   }, [section]);
 
   const markDone = (i: number) => {
-    setDone((prev) => {
-      const next = new Set(prev).add(i);
-      writeIdSet(doneKey, next);
-      return next;
+    setLocal((prev) => {
+      const done = new Set(prev.done).add(i);
+      writeIdSet(doneKey, done);
+      return { ...prev, done };
     });
   };
 
   const markSolved = (i: number) => {
-    setSolved((prev) => {
-      const next = new Set(prev).add(i);
-      writeIdSet(solvedKey, next);
-      return next;
+    setLocal((prev) => {
+      const solved = new Set(prev.solved).add(i);
+      writeIdSet(solvedKey, solved);
+      return { ...prev, solved };
     });
   };
 
@@ -137,13 +133,11 @@ export default function CoursePlayer() {
   const total = sections.length;
   const finished = total > 0 && done.size >= total;
   const progress = total > 0 ? Math.round((done.size / total) * 100) : 0;
+  // Confetti key for the completion screen — mounts with the screen, no
+  // effect needed (NbConfetti renders nothing while the key is 0).
+  const finishBurst = finished ? 1 : 0;
 
-  // Fire the completion confetti once when the module is finished.
-  useEffect(() => {
-    if (finished) setFinishBurst((k) => (k === 0 ? 1 : k));
-  }, [finished]);
-
-  if (isLoading || !loaded) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
