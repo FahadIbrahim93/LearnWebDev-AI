@@ -3,9 +3,10 @@
  * wires it to the player: confetti burst on first solve, then a lock so the
  * challenge stays genuinely interactive on every visit.
  *
- * Key trick: ` NbQuiz` alone was not enough variety, so this module owns all
- * dispatching. The player passes `solvedAtMount` so re-visits skip the gate
- * but keep the replayable play state.
+ * All game dispatching is owned here. The player passes `solvedAtMount` so
+ * re-visits skip the gate but keep the replayable play state. Pass no
+ * `onSolved` in read-only contexts (e.g. the catalog free preview): the game
+ * still plays and celebrates locally, nothing is written to progress.
  */
 import { useRef, useState } from "react";
 import { PartyPopper } from "lucide-react";
@@ -33,7 +34,7 @@ export function SectionActivity({
   slug: string;
   sectionIndex: number;
   interactive: Interactive;
-  onSolved: () => void;
+  onSolved?: () => void;
   solvedAtMount: boolean;
 }) {
   const [burstKey, setBurstKey] = useState(0);
@@ -56,7 +57,7 @@ export function SectionActivity({
       setBurstKey((k) => k + 1);
     }
     setSolvedThisSession(true);
-    onSolved();
+    onSolved?.();
   };
 
   return (

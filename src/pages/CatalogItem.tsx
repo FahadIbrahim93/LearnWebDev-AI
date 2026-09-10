@@ -11,9 +11,17 @@ import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getContentFor } from "@/convex/moduleContent";
 import { NbDisclosure } from "@/components/nb";
-import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
+import {
+  NbBox,
+  NbButton,
+  NbRouterLink,
+  NbSection,
+  NbTag,
+} from "@/components/nb";
+import { SectionActivity } from "@/components/interactive/SectionActivity";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { cn } from "@/lib/utils";
 
 export default function CatalogItem() {
   const { slug = "" } = useParams();
@@ -31,6 +39,9 @@ export default function CatalogItem() {
     "idle" | "pending" | "paid" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
+  // Free preview of section 1 (paid modules): track play locally so the CTA
+  // can react to engagement without touching any progress store.
+  const [previewSolved, setPreviewSolved] = useState(false);
 
   // Returning from Stripe: ?checkout=success (payment done, webhook may lag a
   // few seconds) or ?checkout=cancelled. While ownership hasn't landed yet we
@@ -166,6 +177,87 @@ export default function CatalogItem() {
                       </NbDisclosure>
                     ))}
                   </div>
+
+                  {/* Free preview (paid modules): section 1 in full — reading,
+                      activity, recap, and the playable challenge. Free modules
+                      skip this; the whole course is already free to open. */}
+                  {!lesson.isFree && (
+                    <NbBox className="mt-8 bg-[var(--chart-3)] p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-widest">
+                          Free preview — section 1 in full
+                        </p>
+                        <NbTag className="bg-background">No sign-up needed</NbTag>
+                      </div>
+                      <h3 className="mt-3 text-lg font-bold uppercase leading-tight">
+                        {content.sections[0].title}
+                      </h3>
+                      <div className="mt-3 space-y-2">
+                        {content.sections[0].reading.map((para) => (
+                          <p key={para} className="text-sm leading-relaxed">
+                            {para}
+                          </p>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        <div className="nb-border bg-card p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                            Your challenge
+                          </p>
+                          <p className="mt-1 text-sm leading-relaxed">
+                            {content.sections[0].activity}
+                          </p>
+                        </div>
+                        <div className="nb-border bg-card p-3">
+                          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                            Takeaway
+                          </p>
+                          <p className="mt-1 text-sm leading-relaxed">
+                            {content.sections[0].recap}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4">
+                        <p className="text-xs font-bold uppercase tracking-widest">
+                          Try the challenge — right here
+                        </p>
+                        <div className="mt-2">
+                          <SectionActivity
+                            slug={`${slug}:preview`}
+                            sectionIndex={0}
+                            interactive={content.sections[0].interactive}
+                            onSolved={() => setPreviewSolved(true)}
+                            solvedAtMount={false}
+                          />
+                        </div>
+                      </div>
+
+                      <NbBox
+                        shadow="nb-shadow-sm"
+                        className={cn(
+                          "mt-4 p-3",
+                          previewSolved
+                            ? "bg-[var(--chart-2)]"
+                            : "bg-background",
+                        )}
+                      >
+                        {previewSolved ? (
+                          <p className="text-sm leading-relaxed">
+                            You just finished a real piece of this module. The
+                            other sections teach the same way — by doing.
+                          </p>
+                        ) : (
+                          <p className="text-sm leading-relaxed">
+                            That's the actual teaching style: read a little, do
+                            a thing, move on. Sections 2 and 3 continue exactly
+                            like this.
+                          </p>
+                        )}
+                      </NbBox>
+                    </NbBox>
+                  )}
                 </>
               )}
             </div>
