@@ -595,11 +595,3 @@ export const MODULE_CONTENT: ModuleContent[] = [
 export function getContentFor(slug: string): ModuleContent | undefined {
   return MODULE_CONTENT.find((m) => m.slug === slug);
 }
-
-/* ------------------------------------------------------------------ */
-/* Normalized derived shape for the interactive layer — keeps the       */
-/* player's game dispatch from needing to import the module list.       */
-/* ------------------------------------------------------------------ */
-export function interactiveKindFor(section: LessonSection): Interactive {
-  return section.interactive;
-}
