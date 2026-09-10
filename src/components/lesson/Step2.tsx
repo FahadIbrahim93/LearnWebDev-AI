@@ -122,9 +122,11 @@ export function Step2({
 
             {/* hotspot dots */}
             {HOTSPOTS.map((h) => (
-              <div
+              <button
                 key={h.id}
-                className="absolute"
+                onClick={() => toggle(h.id)}
+                aria-label={`Explain ${h.label}`}
+                className="absolute size-24 -translate-x-1/2 -translate-y-1/2 bg-transparent"
                 style={{
                   left: DOT_POS[h.id].left,
                   top: DOT_POS[h.id].top,
@@ -135,7 +137,7 @@ export function Step2({
                   kind={visited.has(h.id) ? "done" : "idle"}
                   onClick={() => toggle(h.id)}
                 />
-              </div>
+              </button>
             ))}
           </div>
         </NbBox>

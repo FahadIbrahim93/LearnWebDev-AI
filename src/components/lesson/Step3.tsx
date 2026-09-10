@@ -3,7 +3,7 @@
  * Two panels: "The Human Way" vs "The AI Way" of building the same café
  * site, plus a mini simulation of typing a prompt and watching files appear.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles, Wand2 } from "lucide-react";
 import {
   NbBox,
@@ -47,9 +47,34 @@ export function Step3({
 
   const simulate = () => {
     setPhase("thinking");
-    // Simulate AI "thinking" then presenting files — no real backend needed.
     setTimeout(() => setPhase("done"), 1600);
   };
+
+  const parsed = useMemo(() => {
+    const raw = prompt.trim().toLowerCase();
+    if (!raw) return null;
+    const hasBusiness =
+      /cafe|coffee|gym|dog|cat|groom|barber|salon|bakery|pastry|bread|shop|store|studio|clinic/i.test(raw);
+    const hasVibe =
+      /warm|friendly|cozy|minimal|bold|bright|dark|calm|pink|blue|green|neon|retro|modern|clean|fun|fancy|simple/i.test(raw);
+    const wordCount = raw.split(/\\s+/).filter(Boolean).length;
+    const vibeGuess =
+      hasVibe
+        ? Array.from(
+            new Set(
+              raw
+                .split(/\\s+/)
+                .filter(
+                  (w) =>
+                    /warm|friendly|cozy|minimal|bold|bright|dark|calm|pink|blue|green|neon|retro|modern|clean|fun|fancy|simple/i.test(w),
+                ),
+            ),
+          )
+            .slice(0, 2)
+            .join(" & ")
+        : "plain & clear";
+    return { hasBusiness, hasVibe, wordCount, vibeGuess };
+  }, [prompt]);
 
   return (
     <NbSection className="py-8">
@@ -112,8 +137,14 @@ export function Step3({
           </h3>
         </div>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          This is a pretend AI — nothing is sent anywhere. Type a wish and see
-          what “it” does.
+          A pretend AI lives here — nothing is sent anywhere. Type a wish and
+          watch it react. Your browser is the client; the server is just a
+          computer that stores the files.
+          <br />
+          <span className="inline-block mt-1 font-mono text-[10px] opacity-60" aria-label="Blinking cursor">
+            {' '}
+            <span className="nb-caret inline-block" />
+          </span>
         </p>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr]">
@@ -153,6 +184,29 @@ export function Step3({
                 </button>
               ))}
             </div>
+
+            {parsed && phase !== "idle" && (
+              <div className="mt-3 nb-border bg-accent/10 p-2.5 text-xs font-mono leading-relaxed">
+                <p className="font-bold uppercase tracking-widest">AI noticed</p>
+                <ul className="mt-1.5 space-y-0.5">
+                  {parsed.hasBusiness && (
+                    <li>✓ a real business or project in your words</li>
+                  )}
+                  {parsed.hasVibe && (
+                    <li>✓ a feeling: <span className="nb-code">{parsed.vibeGuess}</span></li>
+                  )}
+                  {!parsed.hasBusiness && (
+                    <li className="text-muted-foreground">○ no business word detected — AI will guess</li>
+                  )}
+                  {!parsed.hasVibe && (
+                    <li className="text-muted-foreground">○ no vibe word detected — keeping it neutral</li>
+                  )}
+                  <li className="mt-1 text-muted-foreground">
+                    {parsed.wordCount} words read · {parsed.wordCount >= 8 ? "rich prompt" : parsed.wordCount >= 4 ? "workable" : "a bit short"}
+                  </li>
+                </ul>
+              </div>
+            )}
           </NbBox>
 
           <NbBox className="bg-card p-4">
@@ -167,7 +221,9 @@ export function Step3({
             {phase === "thinking" && (
               <div className="mt-3 space-y-2 font-mono text-xs">
                 <p>→ reading your wish…</p>
-                <p>→ picking colors…</p>
+                {parsed?.hasBusiness && <p>→ spotting the business</p>}
+                {parsed?.hasVibe && <p>→ picking the {parsed.vibeGuess} vibe</p>}
+                <p>→ choosing colors…</p>
                 <p>→ writing index.html…<span className="nb-caret" /></p>
               </div>
             )}

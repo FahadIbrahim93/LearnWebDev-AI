@@ -74,7 +74,8 @@ function buildSite(vibe: Vibe, prompt: string, gen: number): Built {
     title: `${titles[vibe]} ${flavored}`.trim(),
     tagline: taglines[vibe],
     items: items[vibe].map(([n, pr], i) => [
-      i === 0 && prompt ? `${n} — "${p.slice(0, 24)}${p.length > 24 ? "…" : ""}"` : n,
+      i === 0 && prompt ? `${n} — "${p.slice(0, 24)}${p.length > 24 ? "…"
+        : ""}"` : n,
       pr,
     ]),
   };
@@ -218,10 +219,15 @@ export function Step4({
             {assembling && (
               <div className="nb-border mt-3 min-h-[260px] bg-background p-4">
                 <div className="space-y-2 font-mono text-xs">
-                  <p>→ reading your description…</p>
-                  <p>→ sketching the layout…</p>
-                  <p>→ writing index.html…<span className="nb-caret" /></p>
-                  <p>→ painting with CSS…</p>
+                  <p>→ reading your wish ({prompt.trim().split(/\s+/).filter(Boolean).length} words read)</p>
+                  <p>→ sketching the <strong>{vibe}</strong> layout</p>
+                  <p>→ writing the skeleton (index.html)…<span className="nb-caret" /></p>
+                  <p>→ adding the muscles (app.js)…<span className="nb-caret" /></p>
+                  <p>→ painting in <span className="nb-code">{colorDef.name}</span></p>
+                </div>
+                <div className="mt-3 flex gap-1">
+                  <span className="nb-border bg-background px-2 py-1 text-[10px] font-bold uppercase">vibe: {vibe}</span>
+                  <span className="nb-border bg-background px-2 py-1 text-[10px] font-bold uppercase">color: {colorDef.name}</span>
                 </div>
               </div>
             )}

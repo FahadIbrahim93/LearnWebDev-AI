@@ -339,10 +339,10 @@ export default function CoursePlayer() {
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={section}
-              initial={{ opacity: 0, x: 24 }}
+              initial={{ opacity: 0, x: 28 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              exit={{ opacity: 0, x: -28 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
             >
               <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
                 Section {section + 1} of {total}
