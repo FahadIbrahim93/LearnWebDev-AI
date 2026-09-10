@@ -35,6 +35,22 @@ const bookingStatusValidator = v.union(
 
 const schema = defineSchema(
   {
+    // one row per (rate-limit name, key) — sliding-window request throttling
+    rateLimits: defineTable({
+      name: v.string(),
+      key: v.string(),
+      count: v.number(),
+      windowStart: v.number(),
+    }).index("by_name_key", ["name", "key"]),
+
+    // one row per (date, time) slot that has EVER been booked — read+inserted
+    // by createBooking so concurrent mutations contend on the same document
+    // and Convex OCC serializes them (no double-booking race).
+    bookingLocks: defineTable({
+      date: v.string(),
+      time: v.string(),
+    }).index("by_date_time", ["date", "time"]),
+
     // default auth tables using convex auth.
     ...authTables, // do not remove or modify
 
@@ -137,7 +153,9 @@ const schema = defineSchema(
     }).index("by_email", ["email"]),
   },
   {
-    schemaValidation: false,
+    // Full validation catches drift between handlers and schema at deploy
+    // time — with it off, a renamed field silently stores dead data.
+    schemaValidation: true,
   },
 );
 
