@@ -25,26 +25,42 @@ communities; this proves you can build the whole product an owner can run.
 
 ## 2. Deploy runbook (~30 minutes, one-time)
 
-The app is two deployables: a static frontend and a Convex production backend.
+Two deployables: a Convex production backend and a static frontend.
+Repo is already deploy-ready: `convex.json` points functions at
+`src/convex/`, and `vercel.json` handles SPA rewrites, asset caching,
+and security headers — so both platforms need zero manual config.
 
-**Backend — Convex prod**
+**Backend — Convex prod (first time)**
 ```bash
-bunx convex deploy            # creates/uses the production deployment
+bunx convex deploy --prod --create   # creates the production deployment
 ```
-Then in the Convex dashboard → Settings → Environment Variables, add:
-`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`,
-`EMAIL_FROM`, `OWNER_EMAIL`, `STRIPE_SITE_URL` (see README "Going live"
-sections for what each does; all optional — demo mode runs without them).
+Then in the Convex dashboard → Settings → Environment Variables:
 
-**Frontend — Vercel (or Netlify)**
-1. Import the GitHub repo.
-2. Build command `bun run build` · Output directory `dist`.
-3. Environment variable: `VITE_CONVEX_URL` = the prod Convex URL.
+1. **Auth (required, not optional):** the dev deployment's auth keys are
+   platform-provisioned. Copy `JWT_PRIVATE_KEY`, `JWKS`, and
+   `VLY_CONVEX_AUTH_ISSUER` from the dev deployment's env list into prod,
+   and set `CONVEX_SITE_URL` to the prod site URL
+   (`https://<prod-slug>.convex.site`). Without these, sign-in loops back
+   to /auth on prod.
+2. **Capabilities (each optional, test after each):**
+   `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`,
+   `EMAIL_FROM`, `OWNER_EMAIL`, `STRIPE_SITE_URL` — see README "Going
+   live" sections. Demo mode runs fine with none of them.
+
+**Frontend — Vercel**
+1. Import the GitHub repo — `vercel.json` supplies build + routing.
+2. Environment variable: `VITE_CONVEX_URL` = the prod Convex URL.
+3. First build ships; every push to main redeploys automatically.
+
+**Backend sync after the first deploy** — `.github/workflows/deploy-convex.yml`
+keeps prod functions in sync on every push. Enable it once:
+`bunx convex deploy --prod --create-key`, add the key as the repo secret
+`CONVEX_DEPLOY_KEY`. Until then the workflow skips itself harmlessly.
 
 **Stripe webhook** — dashboard → Webhooks → endpoint
-`https://<your-prod-convex-domain>.convex.cloud/stripe_webhook`,
-event `checkout.session.completed`. Then run the README's
-"Go-live verification checklist" (test card 4242… end-to-end).
+`https://<your-prod-slug>.convex.site/stripe_webhook`, event
+`checkout.session.completed`. Then run the README's "Go-live verification
+checklist" (test card 4242… end-to-end).
 
 **First-run** — visit `/admin`, click **Claim admin** immediately.
 
