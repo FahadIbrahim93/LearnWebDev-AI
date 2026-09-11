@@ -143,7 +143,7 @@ export default function Catalog() {
                   <div className="flex flex-wrap items-center gap-1.5">
                     <NbTag className={cn(LEVEL_COLORS[l.level])}>{l.level}</NbTag>
                     {completedSlugs.has(l.slug) && (
-                      <NbTag className="gap-1 bg-[var(--chart-2)]">
+                      <NbTag className="inline-flex items-center gap-1 bg-[var(--chart-2)]">
                         <Award className="size-3" aria-hidden="true" />
                         Completed
                       </NbTag>
