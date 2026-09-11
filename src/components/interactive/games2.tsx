@@ -199,7 +199,9 @@ export function NbPromptBuilderGame({
   const solved =
     chosen.length === correctOrder.length &&
     chosen.every((ci, pos) => chosen[pos] === correctOrder[pos].i);
-  const attempted = chosen.length === correctOrder.length;
+  // At or over the required count counts as an attempt — a learner who adds
+  // one fragment too many deserves corrective feedback, not a neutral nudge.
+  const attempted = chosen.length >= correctOrder.length;
   const wrong = attempted && !solved;
 
   return (
@@ -237,11 +239,20 @@ export function NbPromptBuilderGame({
               key={f.text}
               onClick={() => {
                 if (solved) return;
-                setChosen((cur) =>
+                const next =
                   usedAt >= 0
-                    ? cur.filter((c) => c !== i)
-                    : [...cur, i],
-                );
+                    ? chosen.filter((c) => c !== i)
+                    : [...chosen, i];
+                setChosen(next);
+                // Fire the moment the assembled sentence is exactly right —
+                // the same contract as the other games, so a correct build
+                // can never get stuck waiting on a button that already hid.
+                if (
+                  next.length === correctOrder.length &&
+                  next.every((ci, pos) => ci === correctOrder[pos].i)
+                ) {
+                  onSolved();
+                }
               }}
               className={cn(
                 "nb-border nb-press px-2.5 py-1.5 font-mono text-xs font-bold",
@@ -259,15 +270,6 @@ export function NbPromptBuilderGame({
 
       {!solved && (
         <div className="mt-3 flex gap-2">
-          <GameButton
-            onClick={() => {
-              if (solved) onSolved();
-            }}
-            disabled={!attempted}
-            className={cn(!attempted && "opacity-40")}
-          >
-            Check my prompt
-          </GameButton>
           <GameButton tone="plain" onClick={() => setChosen([])}>
             <RotateCcw className="mr-1 inline size-3" /> Clear
           </GameButton>

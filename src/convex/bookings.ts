@@ -46,16 +46,18 @@ export const listAllBookingsWithUsers = query({
     const me = userId ? await ctx.db.get(userId) : null;
     if (!me?.isAdmin) return [];
     const bookings = await ctx.db.query("bookings").collect();
-    const users = await ctx.db.query("users").collect();
-    const byId = new Map(users.map((u) => [u._id, u] as const));
-    return bookings.map((b) => {
-      const u = byId.get(b.userId);
-      return {
-        ...b,
-        studentName: u?.name ?? null,
-        studentEmail: u?.email ?? null,
+    // Point-read the student per row instead of scanning every user.
+    const withStudent = await Promise.all(
+      bookings.map(async (b) => {
+        const u = await ctx.db.get(b.userId);
+        return {
+          ...b,
+          studentName: u?.name ?? null,
+          studentEmail: u?.email ?? null,
       };
-    });
+      }),
+    );
+    return withStudent;
   },
 });
 

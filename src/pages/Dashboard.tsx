@@ -13,19 +13,12 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getContentFor } from "@/convex/moduleContent";
 import { formatPrice, modulePercent } from "@/lib/courseRules";
+import { LESSON_ID, LESSON_STEP_TITLES as STEP_TITLES } from "@/lib/lessonMeta";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { cn } from "@/lib/utils";
-
-const LESSON_ID = "webdev-ai-v1";
-const STEP_TITLES = [
-  "What is a website?",
-  "What is it made of?",
-  "Where does AI fit in?",
-  "Build one yourself",
-];
 
 function prettyDate(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {

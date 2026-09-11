@@ -16,16 +16,10 @@ import { Step4 } from "@/components/lesson/Step4";
 import { NbBox, NbButton, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { NbConfetti } from "@/components/interactive/NbConfetti";
 import { NbGrowSiteGame } from "@/components/interactive/games2";
+import { LESSON_ID, LESSON_STEP_TITLES } from "@/lib/lessonMeta";
 import { cn } from "@/lib/utils";
 
-const LESSON_ID = "webdev-ai-v1";
-
-const STEP_TITLES = [
-  "What is a website?",
-  "What is it made of?",
-  "Where does AI fit in?",
-  "Build one yourself",
-];
+const STEP_TITLES = LESSON_STEP_TITLES;
 
 export default function Lesson() {
   usePageTitle("Free interactive lesson");

@@ -62,7 +62,9 @@ const schema = defineSchema(
       isAnonymous: v.optional(v.boolean()),
       role: v.optional(roleValidator),
       isAdmin: v.optional(v.boolean()),
-    }).index("email", ["email"]),
+    })
+      .index("email", ["email"])
+      .index("by_admin", ["isAdmin"]),
 
     // lesson progress for the interactive lesson
     lessonProgress: defineTable({
@@ -71,7 +73,9 @@ const schema = defineSchema(
       step: v.number(),
       completedSteps: v.array(v.number()),
       updatedAt: v.number(),
-    }).index("by_user_lesson", ["userId", "lessonId"]),
+    })
+      .index("by_user_lesson", ["userId", "lessonId"])
+      .index("by_lesson", ["lessonId"]),
 
     // per-module course progress (done + solved sections), device-synced
     moduleProgress: defineTable({
@@ -97,7 +101,8 @@ const schema = defineSchema(
       order: v.number(),
     })
       .index("by_slug", ["slug"])
-      .index("by_published", ["isPublished"]),
+      .index("by_published", ["isPublished"])
+      .index("by_status", ["isPublished", "order"]),
 
     // one-time purchases
     orders: defineTable({

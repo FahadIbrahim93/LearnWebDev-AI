@@ -133,6 +133,16 @@ src/
 - **State discipline** — no setState-in-effect cascades; server data is merged
   via derived values and the React render-adjustment pattern.
 
+### Known scaling limits (deliberate for v1)
+Admin surfaces (`/admin`, insights) read full tables — orders, bookings,
+waitlist, module progress — which is the right tradeoff while the whole
+business fits on one screen. Buyer/student names are point-read per row (no
+all-users scans), moderation and admin checks use dedicated indexes, and the
+lesson-progress analytics read through an index. When a table grows past a
+few thousand rows, move those admin queries to `usePaginatedQuery` with
+cursor args, and pre-aggregate insights counters into a summary table —
+both are contained, single-file changes by design.
+
 ## Running locally
 ```bash
 bun install

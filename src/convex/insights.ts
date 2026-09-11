@@ -2,14 +2,9 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { query } from "./_generated/server";
 import { MODULE_CONTENT } from "./moduleContent";
 import { isModuleComplete } from "../lib/courseRules";
+import { LESSON_ID, LESSON_STEP_TITLES } from "../lib/lessonMeta";
 
-const LESSON_ID = "webdev-ai-v1";
-const LESSON_STEPS = [
-  "What is a website?",
-  "What is it made of?",
-  "Where does AI fit in?",
-  "Build one yourself",
-];
+const LESSON_STEPS = LESSON_STEP_TITLES;
 
 /**
  * Admin-only learner analytics, computed from tables we already collect.
@@ -24,9 +19,10 @@ export const getInsights = query({
     if (!me?.isAdmin) return null;
 
     // --- Free-lesson funnel (signed-in learners) -------------------------
+    // Indexed read via the dedicated by_lesson index (O(matching rows)).
     const lessonRows = await ctx.db
       .query("lessonProgress")
-      .filter((q) => q.eq(q.field("lessonId"), LESSON_ID))
+      .withIndex("by_lesson", (q) => q.eq("lessonId", LESSON_ID))
       .collect();
     const funnel = LESSON_STEPS.map((title, i) => ({
       title,

@@ -10,7 +10,7 @@ export const claimAdmin = mutation({
     if (userId === null) throw new Error("Sign in first.");
     const anyAdmin = await ctx.db
       .query("users")
-      .filter((q) => q.eq(q.field("isAdmin"), true))
+      .withIndex("by_admin", (q) => q.eq("isAdmin", true))
       .first();
     if (anyAdmin) throw new Error("An admin already exists.");
     await ctx.db.patch(userId, { isAdmin: true });
@@ -35,7 +35,7 @@ export const listPendingPosts = query({
     if (!me?.isAdmin) return [];
     return await ctx.db
       .query("showcase")
-      .filter((q) => q.eq(q.field("approved"), false))
+      .withIndex("by_approved", (q) => q.eq("approved", false))
       .collect();
   },
 });
@@ -47,16 +47,19 @@ export const listAllOrders = query({
     const me = userId ? await ctx.db.get(userId) : null;
     if (!me?.isAdmin) return [];
     const orders = await ctx.db.query("orders").collect();
-    const users = await ctx.db.query("users").collect();
-    const byId = new Map(users.map((u) => [u._id, u] as const));
-    return orders.map((o) => {
-      const u = byId.get(o.userId);
-      return {
-        ...o,
-        buyerName: u?.name ?? null,
-        buyerEmail: u?.email ?? null,
-      };
-    });
+    // Point-read the buyer per row instead of scanning every user into a
+    // Map — O(1) per order, and cost grows with orders shown, not users.
+    const withBuyer = await Promise.all(
+      orders.map(async (o) => {
+        const u = await ctx.db.get(o.userId);
+        return {
+          ...o,
+          buyerName: u?.name ?? null,
+          buyerEmail: u?.email ?? null,
+        };
+      }),
+    );
+    return withBuyer;
   },
 });
 

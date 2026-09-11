@@ -1,10 +1,18 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { LESSON_ID } from "../lib/lessonMeta";
 
+/**
+ * Persist the signed-in learner's free-lesson progress. `lessonId` is
+ * validated against the shared LESSON_ID so stray keys can never grow the
+ * progress table — the free lesson is the only lesson that tracks steps.
+ */
 export const getLessonProgress = query({
   args: { lessonId: v.string() },
   handler: async (ctx, args) => {
+    if (args.lessonId !== LESSON_ID) return null;
+
     const userId = await getAuthUserId(ctx);
     if (userId === null) return null;
 

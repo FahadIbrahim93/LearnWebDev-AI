@@ -11,9 +11,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbRouterLink, NbSection } from "@/components/nb";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { LESSON_ID, LESSON_STEP_TITLES } from "@/lib/lessonMeta";
 
-const LESSON_ID = "webdev-ai-v1";
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = LESSON_STEP_TITLES.length;
 
 function formatToday() {
   return new Date().toLocaleDateString("en-US", {
@@ -131,7 +131,7 @@ export default function Certificate() {
 
             <div className="mt-8 flex flex-wrap items-end justify-between gap-6 text-left">
               <div>
-                <p className="nb-border-t-2 border-t-2 border-border pt-1 font-mono text-xs font-bold">
+                <p className="border-t-2 border-border pt-1 font-mono text-xs font-bold">
                   {formatToday()}
                 </p>
                 <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
