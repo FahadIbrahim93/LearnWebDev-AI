@@ -1,5 +1,7 @@
 # Web Development with AI
 
+[![CI](https://github.com/FahadIbrahim93/web-development-with-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/FahadIbrahim93/web-development-with-ai/actions/workflows/ci.yml)
+
 An interactive course platform that teaches everyday people — shop owners,
 freelancers, students, the curious — how to build a professional website for
 themselves, with AI as their typing assistant. No coding background required.
@@ -206,17 +208,23 @@ Run these once, in test mode, before selling to real students:
 The platform manages version control here, so this one push is manual:
 
 ```bash
-git init
+# 1. Create the empty repo on GitHub first (no README/license — this repo has both)
+# 2. Then from the project root:
 git add -A
 git commit -m "Web Development with AI — full-stack course platform"
-git remote add origin git@github.com:FahadIbrahim93/<repo-name>.git
-git push -u origin main --force   # replace template scaffold (see below)
+git remote add origin git@github.com:FahadIbrahim93/web-development-with-ai.git
+git push -u origin main
 ```
 
-If the remote repo still holds the old scaffold (as `lark-lilac-lagoon-bolt`
-currently does), either push with `--force` over it, or create a fresh,
-well-named repo (`web-development-with-ai`) and point the portfolio card and
-Vercel import at that instead — the fresh repo is the better portfolio look.
+The first push triggers CI (codegen → typecheck → lint → tests). Without the
+optional `CONVEX_DEPLOY_KEY` secret, codegen is skipped and CI typechecks
+against the committed `_generated` types — the badge should go green on the
+very first run. To also sync the production backend on push, see
+`.github/workflows/deploy-convex.yml` for the one-time secret setup.
+
+Point the portfolio card and Vercel import at this repo. The old template
+scaffold repo (`lark-lilac-lagoon-bolt`) can be deleted once the card and
+deployment are switched over.
 
 Committed on purpose: `.env.example` (no values), `src/convex/_generated`
 (CI typechecks against it — see `.gitignore`), `vercel.json`, and both
