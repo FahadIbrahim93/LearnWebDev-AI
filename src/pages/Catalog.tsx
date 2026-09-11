@@ -3,9 +3,10 @@
  * by keyword, sort by price or length. Free modules are clearly marked.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Award, Search } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { getContentFor } from "@/convex/moduleContent";
 import { SiteHeader } from "@/components/SiteHeader";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
@@ -23,7 +24,19 @@ const LEVEL_COLORS: Record<Level, string> = {
 export default function Catalog() {
   usePageTitle("Course catalog");
   const lessons = useQuery(api.catalog.listLessons, {});
+  const moduleProgressRows = useQuery(api.moduleProgress.listMyModuleProgress, {});
   const seedCatalog = useMutation(api.seed.seedCatalog);
+
+  // Modules the learner has fully finished — the same rule the course player
+  // uses: every section of the module is marked done. Empty when signed out.
+  const completedSlugs = useMemo(() => {
+    const done = new Set<string>();
+    for (const row of moduleProgressRows ?? []) {
+      const total = getContentFor(row.moduleSlug)?.sections.length ?? 0;
+      if (total > 0 && row.doneSections.length >= total) done.add(row.moduleSlug);
+    }
+    return done;
+  }, [moduleProgressRows]);
 
   // First visit: fill the catalog with starter modules (no-op afterwards).
   useEffect(() => {
@@ -127,7 +140,15 @@ export default function Catalog() {
                 className="nb-shadow flex flex-col p-5 transition-transform hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <NbTag className={cn(LEVEL_COLORS[l.level])}>{l.level}</NbTag>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <NbTag className={cn(LEVEL_COLORS[l.level])}>{l.level}</NbTag>
+                    {completedSlugs.has(l.slug) && (
+                      <NbTag className="gap-1 bg-[var(--chart-2)]">
+                        <Award className="size-3" aria-hidden="true" />
+                        Completed
+                      </NbTag>
+                    )}
+                  </div>
                   <span className="font-mono text-xs font-bold">
                     {l.isFree ? "FREE" : `$${(l.priceCents / 100).toFixed(0)}`}
                   </span>
