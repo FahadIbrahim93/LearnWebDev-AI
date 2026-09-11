@@ -10,6 +10,7 @@ import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getContentFor } from "@/convex/moduleContent";
+import { formatPrice } from "@/lib/courseRules";
 import { NbDisclosure } from "@/components/nb";
 import {
   NbBox,
@@ -97,9 +98,7 @@ export default function CatalogItem() {
   };
 
   const price = lesson
-    ? lesson.isFree
-      ? "Free"
-      : `$${(lesson.priceCents / 100).toFixed(0)}`
+    ? formatPrice(lesson.priceCents, lesson.isFree)
     : null;
 
   return (

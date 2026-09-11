@@ -7,6 +7,7 @@ import { Award, Search } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getContentFor } from "@/convex/moduleContent";
+import { formatPrice, isModuleComplete } from "@/lib/courseRules";
 import { SiteHeader } from "@/components/SiteHeader";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
@@ -27,13 +28,14 @@ export default function Catalog() {
   const moduleProgressRows = useQuery(api.moduleProgress.listMyModuleProgress, {});
   const seedCatalog = useMutation(api.seed.seedCatalog);
 
-  // Modules the learner has fully finished — the same rule the course player
-  // uses: every section of the module is marked done. Empty when signed out.
+  // Modules the learner has fully finished — the shared completion rule
+  // (src/lib/courseRules.ts), the same one the player and dashboard use.
   const completedSlugs = useMemo(() => {
     const done = new Set<string>();
     for (const row of moduleProgressRows ?? []) {
-      const total = getContentFor(row.moduleSlug)?.sections.length ?? 0;
-      if (total > 0 && row.doneSections.length >= total) done.add(row.moduleSlug);
+      if (isModuleComplete(getContentFor(row.moduleSlug), row.doneSections.length)) {
+        done.add(row.moduleSlug);
+      }
     }
     return done;
   }, [moduleProgressRows]);
@@ -150,7 +152,7 @@ export default function Catalog() {
                     )}
                   </div>
                   <span className="font-mono text-xs font-bold">
-                    {l.isFree ? "FREE" : `$${(l.priceCents / 100).toFixed(0)}`}
+                    {l.isFree ? "FREE" : formatPrice(l.priceCents, l.isFree)}
                   </span>
                 </div>
                 <h2 className="mt-3 text-lg font-bold uppercase leading-tight">

@@ -3,17 +3,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { enforceRateLimit, userRateLimitKey } from "./rateLimit";
-
-/** Bookable half-hour slots (24h local time). Shared with the booking UI. */
-export const BOOKING_SLOTS = [
-  "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
-  "16:00", "16:30", "17:00", "17:30",
-] as const;
-
-function isValidDate(s: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s + "T00:00:00Z"));
-}
+import { isValidBookingDate, isBookableSlot } from "../lib/courseRules";
 
 /** Server-side pretty date (timezone-optional) for email copy. */
 function prettyDate(iso: string, timeZone?: string) {
@@ -96,8 +86,8 @@ export const createBooking = mutation({
     if (userId === null) throw new Error("Sign in to book a session.");
 
     // Strict server-side validation — the UI is not the source of truth.
-    if (!isValidDate(args.date)) throw new Error("Invalid date.");
-    if (!(BOOKING_SLOTS as readonly string[]).includes(args.time)) {
+    if (!isValidBookingDate(args.date)) throw new Error("Invalid date.");
+    if (!isBookableSlot(args.time)) {
       throw new Error("Invalid time slot.");
     }
     if (args.note && args.note.length > 500) {

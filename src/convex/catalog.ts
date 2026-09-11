@@ -6,6 +6,7 @@ import {
   query,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { enforceRateLimit, userRateLimitKey } from "./rateLimit";
 
 /* ------------------------------------------------------------------ */
 /* Public catalog queries                                              */
@@ -80,6 +81,8 @@ export const startCheckout = mutation({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
     if (!lesson || !lesson.isPublished) throw new Error("Lesson not found.");
+
+    await enforceRateLimit(ctx, "checkout", await userRateLimitKey(ctx));
 
     const existing = await ctx.db
       .query("orders")
@@ -222,21 +225,25 @@ export const markOrderPaidById = internalMutation({
     await ctx.scheduler.runAfter(0, internal.catalog.sendOrderReceipt, {
       orderId: args.orderId,
     });
-  },
-});
-
-/* ------------------------------------------------------------------ */
-/* Stripe fulfillment (called by webhook once keys are configured)      */
-/* ------------------------------------------------------------------ */
-
-export const markOrderPaid = internalMutation({
-  args: { stripeSessionId: v.string() },
-  handler: async (ctx, args) => {
-    const order = await ctx.db
-      .query("orders")
-      .withIndex("by_session", (q) => q.eq("stripeSessionId", args.stripeSessionId))
+    // Owner heads-up, same as demo checkout sends (dormant without
+    // OWNER_EMAIL + key) — revenue awareness shouldn't depend on which
+    // provider fulfilled the order.
+    const lesson = await ctx.db
+      .query("lessons")
+      .withIndex("by_slug", (q) => q.eq("slug", order.lessonSlug))
       .unique();
-    if (!order) return;
-    await ctx.db.patch(order._id, { status: "paid", provider: "stripe" });
+    await ctx.scheduler.runAfter(0, internal.emails.notifyOwner, {
+      subject: `New purchase — ${lesson?.title ?? order.lessonSlug} ($${(order.amountCents / 100).toFixed(2)})`,
+      text: [
+        `A module was just purchased (stripe checkout):`,
+        ``,
+        `Module: ${lesson?.title ?? order.lessonSlug}`,
+        `Amount: $${(order.amountCents / 100).toFixed(2)}`,
+        ``,
+        `Revenue details in the admin area → Orders tab.`,
+      ].join("\n"),
+    });
   },
 });
+
+

@@ -12,7 +12,16 @@
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 
-const FROM = "Web Development with AI <onboarding@resend.dev>";
+/**
+ * Sender identity. Resend only lets you send from a domain you've verified,
+ * so go-live is: verify your domain in Resend → Domains, then set EMAIL_FROM
+ * (e.g. "Web Development with AI <receipts@yourdomain.com>"). Until then the
+ * default onboarding@resend.dev address can only deliver to your own account
+ * email — fine for testing receipts, not for real students.
+ */
+function emailFrom(): string {
+  return process.env.EMAIL_FROM ?? "Web Development with AI <onboarding@resend.dev>";
+}
 
 export const sendEmail = internalAction({
   args: {
@@ -35,7 +44,7 @@ export const sendEmail = internalAction({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: FROM,
+        from: emailFrom(),
         to: [args.to],
         subject: args.subject,
         text: args.text,
@@ -72,7 +81,7 @@ export const notifyOwner = internalAction({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: FROM,
+        from: emailFrom(),
         to: [owner],
         subject: args.subject,
         text: args.text,

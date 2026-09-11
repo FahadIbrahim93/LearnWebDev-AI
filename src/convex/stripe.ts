@@ -12,6 +12,7 @@
  */
 import Stripe from "stripe";
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
 import { action, httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 
@@ -108,7 +109,7 @@ export const stripeWebhook = httpAction(async (ctx, request) => {
     const orderId = session.metadata?.orderId;
     if (orderId) {
       await ctx.runMutation(internal.catalog.markOrderPaidById, {
-        orderId: orderId as never,
+        orderId: orderId as Id<"orders">,
         sessionId: session.id,
       });
     }

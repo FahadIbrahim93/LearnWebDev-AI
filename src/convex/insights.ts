@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { query } from "./_generated/server";
 import { MODULE_CONTENT } from "./moduleContent";
+import { isModuleComplete } from "../lib/courseRules";
 
 const LESSON_ID = "webdev-ai-v1";
 const LESSON_STEPS = [
@@ -42,16 +43,16 @@ export const getInsights = query({
 
     const modules = MODULE_CONTENT.map((m) => {
       const rows = progressRows.filter((r) => r.moduleSlug === m.slug);
-      const total = m.sections.length;
       const purchased = orders.filter(
         (o) => o.lessonSlug === m.slug && o.status === "paid",
       ).length;
       return {
         slug: m.slug,
         title: titleBySlug.get(m.slug) ?? m.slug,
-        sections: total,
+        sections: m.sections.length,
         started: rows.filter((r) => r.doneSections.length > 0).length,
-        completed: rows.filter((r) => r.doneSections.length >= total).length,
+        completed: rows.filter((r) => isModuleComplete(m, r.doneSections.length))
+          .length,
         purchased,
       };
     });

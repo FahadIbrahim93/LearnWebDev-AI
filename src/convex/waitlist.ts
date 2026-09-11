@@ -1,15 +1,18 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { enforceRateLimit, valueRateLimitKey } from "./rateLimit";
+import { isValidEmail } from "../lib/courseRules";
 
 /** Join the pre-launch waitlist. Idempotent per email. */
 export const joinWaitlist = mutation({
   args: { email: v.string() },
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isValidEmail(email)) {
       throw new Error("That doesn't look like an email address.");
     }
+    await enforceRateLimit(ctx, "waitlist", await valueRateLimitKey(email));
     const existing = await ctx.db
       .query("waitlist")
       .withIndex("by_email", (q) => q.eq("email", email))

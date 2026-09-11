@@ -16,10 +16,13 @@ import { internalMutation, type MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 export const RATE_LIMITS = {
-  waitlist: { max: 5, windowMs: 60 * 60 * 1000 }, // 5/hour per IP
+  // Convex mutations cannot read request IPs, so anonymous writes (waitlist)
+  // key on the submitted value; signed-in writes key on the user id.
+  waitlist: { max: 5, windowMs: 60 * 60 * 1000 }, // 5/hour per email
   comment: { max: 10, windowMs: 10 * 60 * 1000 }, // 10/10min per user
   post: { max: 3, windowMs: 60 * 60 * 1000 }, // 3/hour per user
   booking: { max: 5, windowMs: 24 * 60 * 60 * 1000 }, // 5/day per user
+  checkout: { max: 10, windowMs: 60 * 60 * 1000 }, // 10/hour per user
 } as const;
 
 export type RateLimitName = keyof typeof RATE_LIMITS;
@@ -85,8 +88,14 @@ export const cleanup = internalMutation({
   },
 });
 
-/** Caller key for a signed-in rate limit — falls back to "anonymous". */
+/** Caller key for a signed-in rate limit — the user id. */
 export async function userRateLimitKey(ctx: MutationCtx): Promise<string> {
   const userId = await getAuthUserId(ctx);
-  return userId ?? "anonymous";
+  if (userId === null) throw new Error("Sign in first.");
+  return userId;
+}
+
+/** Caller key for an anonymous write keyed on a submitted value (email). */
+export async function valueRateLimitKey(value: string): Promise<string> {
+  return value.trim().toLowerCase();
 }

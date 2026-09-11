@@ -158,8 +158,11 @@ manually in this environment.
 ## Turning on real emails
 1. Create a Resend account and grab an API key.
 2. Add `RESEND_API_KEY` via the project's Keys/API keys UI.
-3. (Recommended) Verify your sending domain in Resend and change the `FROM`
-   constant in `src/convex/emails.ts` to your domain.
+3. (Required for real students) Verify your sending domain in Resend →
+   Domains, then add `EMAIL_FROM` (e.g.
+   `Web Development with AI <receipts@yourdomain.com>`). Without a verified
+   domain, Resend can only deliver to your own account email — fine for
+   testing, not for learners.
 
 Booking confirmations and purchase receipts start flowing immediately —
 no other code changes needed.
@@ -171,6 +174,22 @@ silent no-ops.
 
 Until keys exist, checkout runs in demo mode: orders are created and marked
 paid without charging anyone, so the whole flow is demo-able safely.
+
+## Go-live verification checklist
+Run these once, in test mode, before selling to real students:
+
+1. **Payments end-to-end.** With Stripe test keys set, buy a module with
+   card `4242 4242 4242 4242` (any future expiry, any CVC). Verify: hosted
+   checkout opens → webhook marks the order paid (Stripe dashboard →
+   Webhooks → attempts) → the module unlocks on return → receipt email
+   arrives → the purchase shows in `/admin` → Orders.
+2. **Emails.** Send one booking confirmation and one receipt to your own
+   address, then to a non-account address once the domain is verified.
+3. **Guardrails.** Confirm the demo-checkout banner is gone once real keys
+   exist, and that a logged-out visitor hitting Buy is sent to sign-in and
+   returned to the right module afterwards.
+4. **First admin.** Visit `/admin`, click **Claim admin**, so ownership
+   can't be taken by a stranger.
 
 ## First-run notes
 - The catalog self-seeds with 6 starter modules on first visit.

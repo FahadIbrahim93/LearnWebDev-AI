@@ -21,6 +21,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getContentFor } from "@/convex/moduleContent";
+import { isModuleComplete, modulePercent } from "@/lib/courseRules";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbRouterLink, NbSection, NbTag } from "@/components/nb";
 import { NbConfetti } from "@/components/interactive/NbConfetti";
@@ -131,8 +132,8 @@ export default function CoursePlayer() {
 
   const sections = content?.sections ?? [];
   const total = sections.length;
-  const finished = total > 0 && done.size >= total;
-  const progress = total > 0 ? Math.round((done.size / total) * 100) : 0;
+  const finished = isModuleComplete(content, done.size);
+  const progress = modulePercent(content, done.size);
   // Confetti key for the completion screen — mounts with the screen, no
   // effect needed (NbConfetti renders nothing while the key is 0).
   const finishBurst = finished ? 1 : 0;

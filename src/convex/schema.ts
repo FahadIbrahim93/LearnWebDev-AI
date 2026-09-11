@@ -108,9 +108,7 @@ const schema = defineSchema(
       provider: v.optional(v.string()), // "demo" | "stripe"
       stripeSessionId: v.optional(v.string()),
       createdAt: v.number(),
-    })
-      .index("by_user", ["userId"])
-      .index("by_session", ["stripeSessionId"]),
+    }).index("by_user", ["userId"]),
 
     // 1:1 mentor session bookings
     bookings: defineTable({

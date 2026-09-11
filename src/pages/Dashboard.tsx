@@ -12,6 +12,7 @@ import { Award,
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { getContentFor } from "@/convex/moduleContent";
+import { formatPrice, modulePercent } from "@/lib/courseRules";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -48,14 +49,10 @@ export default function Dashboard() {
   );
   // slug -> % complete, from server-synced per-module progress
   const modulePct = new Map(
-    (moduleProgressRows ?? []).map((row) => {
-      const content = getContentFor(row.moduleSlug);
-      const total = content?.sections.length ?? 0;
-      return [
-        row.moduleSlug,
-        total > 0 ? Math.round((row.doneSections.length / total) * 100) : 0,
-      ] as const;
-    }),
+    (moduleProgressRows ?? []).map((row) => [
+      row.moduleSlug,
+      modulePercent(getContentFor(row.moduleSlug), row.doneSections.length),
+    ] as const),
   );
 
   const cancelBooking = useMutation(api.bookings.cancelBooking);
@@ -224,7 +221,7 @@ export default function Dashboard() {
                       {recommendation.tagline}
                     </p>
                     <p className="mt-2 font-mono text-xs font-bold">
-                      ${((recommendation.priceCents ?? 0) / 100).toFixed(0)} · one-time
+                      {formatPrice(recommendation.priceCents ?? 0, false)} · one-time
                     </p>
                   </NbRouterLink>
                 );

@@ -1,6 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { enforceRateLimit, userRateLimitKey } from "./rateLimit";
 import { getCurrentUser } from "./users";
 
 const MAX_TITLE = 80;
@@ -56,6 +57,7 @@ export const createPost = mutation({
     if (url && !/^https?:\/\//.test(url)) {
       throw new Error("Link must start with http:// or https://");
     }
+    await enforceRateLimit(ctx, "post", await userRateLimitKey(ctx));
 
     return await ctx.db.insert("showcase", {
       userId,
@@ -82,6 +84,7 @@ export const createComment = mutation({
     }
     const post = await ctx.db.get(args.postId);
     if (!post || !post.approved) throw new Error("Post not found.");
+    await enforceRateLimit(ctx, "comment", await userRateLimitKey(ctx));
 
     return await ctx.db.insert("comments", {
       postId: args.postId,
