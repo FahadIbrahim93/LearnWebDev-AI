@@ -191,6 +191,27 @@ Run these once, in test mode, before selling to real students:
 4. **First admin.** Visit `/admin`, click **Claim admin**, so ownership
    can't be taken by a stranger.
 
+## Pushing to GitHub
+
+The platform manages version control here, so this one push is manual:
+
+```bash
+git init
+git add -A
+git commit -m "Web Development with AI — full-stack course platform"
+git remote add origin git@github.com:FahadIbrahim93/<repo-name>.git
+git push -u origin main --force   # replace template scaffold (see below)
+```
+
+If the remote repo still holds the old scaffold (as `lark-lilac-lagoon-bolt`
+currently does), either push with `--force` over it, or create a fresh,
+well-named repo (`web-development-with-ai`) and point the portfolio card and
+Vercel import at that instead — the fresh repo is the better portfolio look.
+
+Committed on purpose: `.env.example` (no values), `src/convex/_generated`
+(CI typechecks against it — see `.gitignore`), `vercel.json`, and both
+workflows. Never committed: any `.env*` with values.
+
 ## First-run notes
 - The catalog self-seeds with 6 starter modules on first visit.
 - The first person to visit `/admin` and click **Claim admin** becomes the
