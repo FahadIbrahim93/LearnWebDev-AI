@@ -14,6 +14,8 @@ import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as bookings from "../bookings.js";
 import type * as catalog from "../catalog.js";
 import type * as emails from "../emails.js";
+import type * as github from "../github.js";
+import type * as githubCache from "../githubCache.js";
 import type * as http from "../http.js";
 import type * as insights from "../insights.js";
 import type * as moduleContent from "../moduleContent.js";
@@ -39,6 +41,8 @@ declare const fullApi: ApiFromModules<{
   bookings: typeof bookings;
   catalog: typeof catalog;
   emails: typeof emails;
+  github: typeof github;
+  githubCache: typeof githubCache;
   http: typeof http;
   insights: typeof insights;
   moduleContent: typeof moduleContent;

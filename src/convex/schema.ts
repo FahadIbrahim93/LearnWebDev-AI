@@ -154,6 +154,22 @@ const schema = defineSchema(
       email: v.string(),
       createdAt: v.number(),
     }).index("by_email", ["email"]),
+
+    // Cached snapshot of the public GitHub repo powering the "Built in the
+    // open" landing widget and the admin repo-health card. A single fixed
+    // row ("singleton") refreshed by a background action — reads never hit
+    // the network, so the landing page stays fast and rate-limit-proof.
+    githubCache: defineTable({
+      id: v.literal("singleton"),
+      repo: v.string(),
+      stars: v.number(),
+      forks: v.number(),
+      openIssues: v.number(),
+      defaultBranch: v.string(),
+      pushedAt: v.number(),
+      latestReleaseTag: v.optional(v.string()),
+      fetchedAt: v.number(),
+    }).index("by_singleton", ["id"]),
   },
   {
     // Full validation catches drift between handlers and schema at deploy

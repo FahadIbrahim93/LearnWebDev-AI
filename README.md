@@ -113,6 +113,7 @@ src/
 │   │                             #   + per-section interactive challenge data
 │   ├── catalog.ts / stripe.ts    #   purchase flow + webhook fulfillment
 │   ├── bookings.ts / emails.ts   #   1:1 sessions + Resend transactional email
+│   ├── github.ts / githubCache.ts#   repo stats (token-backed, cached snapshot)
 │   ├── showcase.ts / admin.ts    #   community + owner tools
 │   └── insights.ts               #   admin analytics (funnel + engagement)
 ├── pages/                        # Landing, Lesson, Catalog, CatalogItem,
@@ -183,6 +184,24 @@ no other code changes needed.
 address) alongside the Resend key, and you'll also receive a short email
 for every new booking and purchase. Without it, owner notifications stay
 silent no-ops.
+
+## Connecting GitHub (repo stats)
+The landing page has a "Built in the open" section and the admin overview
+has a repo-health card, both showing live stats for this project's public
+repository. They stay hidden until the integration is configured:
+
+1. Add `GITHUB_TOKEN` via the project's Keys/API keys UI — a GitHub
+   personal access token (Settings → Developer settings → Tokens).
+   Fine-grained, read-only, **no** repo scopes selected (public metadata
+   only) is enough. This raises the API limit from 60 to 5,000 req/h.
+2. Optionally add `GITHUB_REPO` as `owner/repo` (a full github.com URL
+   also works). Without it, the integration tracks the project's default
+   repo: `FahadIbrahim93/web-development-with-ai`.
+
+Stats are fetched by an admin-gated action and cached as a single row —
+public page reads never touch the GitHub API, so the landing page stays
+fast and can never be rate-limited by visitor traffic. Refresh from the
+admin overview card (or just open `/admin` and hit Refresh after pushing).
 
 Until keys exist, checkout runs in demo mode: orders are created and marked
 paid without charging anyone, so the whole flow is demo-able safely.

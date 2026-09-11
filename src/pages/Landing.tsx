@@ -9,10 +9,13 @@ import {
   ArrowRight,
   CalendarClock,
   ChefHat,
+  CircleDot,
+  GitFork,
   Mail,
   MousePointerClick,
   Rocket,
   Sparkles,
+  Star,
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -25,6 +28,7 @@ import {
   NbTag,
 } from "@/components/nb";
 import { SiteHeader } from "@/components/SiteHeader";
+import { timeAgo } from "@/lib/githubShape";
 
 const PILLARS = [
   {
@@ -58,6 +62,7 @@ export default function Landing() {
   const joinWaitlist = useMutation(api.waitlist.joinWaitlist);
   const waitlistCount = useQuery(api.waitlist.countWaitlist, {});
   const showcase = useQuery(api.showcase.listApproved, {});
+  const repo = useQuery(api.githubCache.repoSnapshot, {});
   const [email, setEmail] = useState("");
   const [waitlistState, setWaitlistState] = useState<
     "idle" | "done" | "error"
@@ -275,6 +280,46 @@ export default function Landing() {
           <p className="mt-4 text-xs text-muted-foreground">
             Real projects from the student showcase, shared with permission.
           </p>
+        </NbSection>
+      )}
+
+      {/* Built in the open — live repo stats, only when the GitHub
+          integration is configured (otherwise this section is absent). */}
+      {repo && (
+        <NbSection className="pb-14">
+          <h2 className="text-2xl font-bold uppercase tracking-tight sm:text-3xl">
+            Built in the open
+          </h2>
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-muted-foreground">
+            This very platform is public on GitHub — the same code you're
+            using, in the open. And yes, it was built the way this course
+            teaches: describe it, let AI type, review everything.
+          </p>
+          <a
+            href={`https://github.com/${repo.repo}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nb-border nb-shadow mt-4 inline-flex flex-wrap items-center gap-x-5 gap-y-2 bg-card px-5 py-4 transition-transform hover:-translate-y-0.5"
+          >
+            <span className="font-mono text-sm font-bold underline">{repo.repo}</span>
+            <span className="flex items-center gap-1.5 font-mono text-sm">
+              <Star className="size-4" /> {repo.stars}
+            </span>
+            <span className="flex items-center gap-1.5 font-mono text-sm">
+              <GitFork className="size-4" /> {repo.forks}
+            </span>
+            <span className="flex items-center gap-1.5 font-mono text-sm">
+              <CircleDot className="size-4" /> {repo.openIssues} open issues
+            </span>
+            <span className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+              pushed {timeAgo(repo.pushedAt)}
+            </span>
+            {repo.latestReleaseTag && (
+              <span className="nb-border bg-[var(--chart-5)] px-2 py-0.5 font-mono text-xs font-bold">
+                {repo.latestReleaseTag}
+              </span>
+            )}
+          </a>
         </NbSection>
       )}
 

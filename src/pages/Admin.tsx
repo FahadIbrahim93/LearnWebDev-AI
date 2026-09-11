@@ -11,16 +11,18 @@ import {
   Copy,
   LayoutDashboard,
   Mail,
+  RefreshCw,
   ShieldCheck,
   Users,
 } from "lucide-react";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { SiteHeader } from "@/components/SiteHeader";
 import { NbBox, NbButton, NbSection, NbTag } from "@/components/nb";
 import { useAuth } from "@/hooks/use-auth";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { timeAgo } from "@/lib/githubShape";
 
 const LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
@@ -55,6 +57,8 @@ export default function Admin() {
   const deleteLesson = useMutation(api.admin.deleteLesson);
   const publishLesson = useMutation(api.admin.publishLesson);
   const updateBookingStatus = useMutation(api.admin.updateBookingStatus);
+  const refreshRepo = useAction(api.github.refreshNow);
+  const repo = useQuery(api.githubCache.repoSnapshot, {});
 
   const [tab, setTab] = useState<
     | "overview"
@@ -71,6 +75,8 @@ export default function Admin() {
     | null
   >(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [repoMsg, setRepoMsg] = useState<string | null>(null);
 
   const paidRevenue = (orders ?? [])
     .filter((o) => o.status === "paid")
@@ -185,6 +191,86 @@ export default function Admin() {
               </p>
             </NbBox>
           </div>
+        )}
+
+      {/* GitHub repo health — live stats via the GitHub integration */}
+      {tab === "overview" && (
+        <NbBox className="nb-shadow mt-4 bg-card p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Repo health · GitHub</p>
+                {repo ? (
+                  <a
+                    href={`https://github.com/${repo.repo}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block font-mono text-lg font-bold underline"
+                  >
+                    {repo.repo}
+                  </a>
+                ) : (
+                  <p className="mt-1 text-sm font-bold uppercase">Not connected</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {repo?.latestReleaseTag && (
+                  <span className="nb-border bg-[var(--chart-5)] px-2 py-0.5 font-mono text-xs font-bold">
+                    release {repo.latestReleaseTag}
+                  </span>
+                )}
+                <NbButton
+                  variant="ghost"
+                  className="px-3 py-1.5 text-xs"
+                  disabled={refreshing}
+                  onClick={async () => {
+                    setRefreshing(true);
+                    setRepoMsg(null);
+                    try {
+                      const r = await refreshRepo({});
+                      setRepoMsg(r.message);
+                    } catch (e) {
+                      setRepoMsg(e instanceof Error ? e.message : "Refresh failed.");
+                    } finally {
+                      setRefreshing(false);
+                    }
+                  }}
+                >
+                  <RefreshCw className={refreshing ? "size-3.5 animate-spin" : "size-3.5"} /> Refresh
+                </NbButton>
+              </div>
+            </div>
+
+            {repo ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                <div className="nb-border bg-background px-3 py-2">
+                  <p className="font-mono text-xl font-bold">{repo.stars}</p>
+                  <p className="text-xs text-muted-foreground">Stars</p>
+                </div>
+                <div className="nb-border bg-background px-3 py-2">
+                  <p className="font-mono text-xl font-bold">{repo.forks}</p>
+                  <p className="text-xs text-muted-foreground">Forks</p>
+                </div>
+                <div className="nb-border bg-background px-3 py-2">
+                  <p className="font-mono text-xl font-bold">{repo.openIssues}</p>
+                  <p className="text-xs text-muted-foreground">Open issues</p>
+                </div>
+                <div className="nb-border bg-background px-3 py-2">
+                  <p className="font-mono text-xl font-bold">{timeAgo(repo.pushedAt)}</p>
+                  <p className="text-xs text-muted-foreground">Last push</p>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Add a <span className="nb-code px-1">GITHUB_TOKEN</span> in the
+                Keys tab to connect this project's repository — live stars,
+                forks, issues, and the latest release will show here and in
+                the "Built in the open" section on the landing page.
+              </p>
+            )}
+            {repoMsg && (
+              <p className="mt-2 font-mono text-xs text-muted-foreground">{repoMsg}</p>
+            )}
+          </NbBox>
         )}
 
         {/* Insights */}
