@@ -1,7 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
 import { RouteLoading, RouteSyncer } from "@/components/RouteSyncer";
-import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import React, { StrictMode, lazy, Suspense } from "react";
@@ -22,6 +21,15 @@ const Showcase = lazy(() => import("./pages/Showcase.tsx"));
 const Admin = lazy(() => import("./pages/Admin.tsx"));
 const Certificate = lazy(() => import("./pages/Certificate.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+
+// The Vly preview toolbar (and its heavy snapdom screenshot dependency) is
+// lazy so it never blocks the first parse of the app bundle — it pops in a
+// moment later and behaves exactly the same.
+const VlyToolbar = lazy(() =>
+  import("../vly-toolbar-readonly.tsx").then((m) => ({
+    default: m.VlyToolbar,
+  })),
+);
 
 /** Silent error boundary — if VlyToolbar crashes it renders nothing instead of
  *  crashing the whole app (e.g. hook errors in WebContainer environment). */
@@ -85,7 +93,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RootErrorBoundary>
       <ToolbarErrorBoundary>
-        <VlyToolbar />
+        <Suspense fallback={null}>
+          <VlyToolbar />
+        </Suspense>
       </ToolbarErrorBoundary>
       <ConvexAuthProvider client={convex}>
         <BrowserRouter>

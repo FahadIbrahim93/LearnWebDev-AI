@@ -91,6 +91,10 @@ contrast, and a full dark developer-facing mode.
 
 ## Architecture & code map
 
+A deep-dive version of this section — including the request flow for a
+learner, backend access-control model, and the testing strategy — lives in
+[`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 ```
 src/
 ├── components/
