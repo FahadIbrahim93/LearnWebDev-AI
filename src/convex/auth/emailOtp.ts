@@ -26,7 +26,9 @@ export const emailOtp = Email({
         },
         {
           headers: {
-            "x-api-key": "fb_email_2crN1hqIArZP2bEfvjp5Qik4",
+            // Platform-provisioned key for the OTP mail relay. Injected by the
+            // Freebuff environment (see Keys tab) — never commit a literal key.
+            "x-api-key": process.env.VLY_EMAIL_API_KEY ?? "",
           },
         },
       );

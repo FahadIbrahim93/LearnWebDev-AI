@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/input-otp";
 
 import { useAuth } from "@/hooks/use-auth";
+import { usePageTitle } from "@/hooks/use-page-title";
 import logo from "@/assets/logo.svg";
 import { ArrowRight, Loader2, Mail, UserX } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
@@ -42,6 +43,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     searchParams.get("returnTo"),
     redirectAfterAuth,
   );
+  usePageTitle("Sign in");
   const [step, setStep] = useState<"signIn" | { email: string }>("signIn");
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -115,14 +117,14 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
             <>
               <CardHeader className="text-center">
               <div className="flex justify-center">
-                    <img
-                      src={logo}
-                      alt="Lock Icon"
-                      width={64}
-                      height={64}
-                      className="rounded-lg mb-4 mt-4 cursor-pointer"
+                    <button
+                      type="button"
                       onClick={() => navigate("/")}
-                    />
+                      aria-label="Web Development with AI — back to home"
+                      className="mb-4 mt-4 cursor-pointer"
+                    >
+                      <img src={logo} alt="" width={64} height={64} />
+                    </button>
                   </div>
                 <CardTitle className="text-xl">Welcome to Web Development with AI</CardTitle>
                 <CardDescription>
@@ -139,6 +141,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                         name="email"
                         placeholder="name@example.com"
                         type="email"
+                        aria-label="Email address"
                         className="pl-9"
                         disabled={isLoading}
                         required
@@ -158,7 +161,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     </Button>
                   </div>
                   {error && (
-                    <p className="mt-2 text-sm text-red-500">{error}</p>
+                    <p role="alert" className="mt-2 text-sm text-red-500">{error}</p>
                   )}
                   
                   <div className="mt-4">
@@ -202,6 +205,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
 
                   <div className="flex justify-center">
                     <InputOTP
+                      aria-label="6-digit verification code"
                       value={otp}
                       onChange={setOtp}
                       maxLength={6}
@@ -224,7 +228,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     </InputOTP>
                   </div>
                   {error && (
-                    <p className="mt-2 text-sm text-red-500 text-center">
+                    <p role="alert" className="mt-2 text-sm text-red-500 text-center">
                       {error}
                     </p>
                   )}
