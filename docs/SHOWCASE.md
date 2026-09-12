@@ -42,6 +42,9 @@ Then in the Convex dashboard → Settings → Environment Variables:
    and set `CONVEX_SITE_URL` to the prod site URL
    (`https://<prod-slug>.convex.site`). Without these, sign-in loops back
    to /auth on prod.
+   Also copy `VLY_EMAIL_API_KEY` from the dev deployment's env list —
+   the OTP email relay authenticates with it; without it, sign-in codes
+   never arrive on prod.
 2. **Capabilities (each optional, test after each):**
    `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`,
    `EMAIL_FROM`, `OWNER_EMAIL`, `STRIPE_SITE_URL` — see README "Going
