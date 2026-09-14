@@ -16,5 +16,10 @@ dist
 *.log
 .vercel
 
+# Platform runtime + one-off agent scratch files
+isolate/
+*.tmp.mjs
+*.tmp.txt
+
 # Source snapshots (use git for real versioning)
 *.tar.gz

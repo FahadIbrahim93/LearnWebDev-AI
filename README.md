@@ -226,28 +226,31 @@ Run these once, in test mode, before selling to real students:
 4. **First admin.** Visit `/admin`, click **Claim admin**, so ownership
    can't be taken by a stranger.
 
-## Pushing to GitHub
+## GitHub repository
 
-The platform manages version control here, so this one push is manual:
+This repository is live at
+[`FahadIbrahim93/web-development-with-ai`](https://github.com/FahadIbrahim93/web-development-with-ai).
+The managed builder environment has no git binary, so the initial publish
+was made through the GitHub REST API (blob → tree → commit → branch) — the
+repo holds an authoritative snapshot, not granular history.
+
+To work on it locally:
 
 ```bash
-# 1. Create the empty repo on GitHub first (no README/license — this repo has both)
-# 2. Then from the project root:
-git add -A
-git commit -m "Web Development with AI — full-stack course platform"
-git remote add origin git@github.com:FahadIbrahim93/web-development-with-ai.git
-git push -u origin main
+git clone https://github.com/FahadIbrahim93/web-development-with-ai.git
+cd web-development-with-ai
+bun install
+bun convex dev --once      # generate backend types; prints your dev URL
+cp .env.example .env.local # then fill VITE_CONVEX_URL from that output
+bun run dev
 ```
 
-The first push triggers CI (codegen → typecheck → lint → tests). Without the
-optional `CONVEX_DEPLOY_KEY` secret, codegen is skipped and CI typechecks
-against the committed `_generated` types — the badge should go green on the
-very first run. To also sync the production backend on push, see
+From your clone, normal git takes over: commit, push, and CI runs on every
+update to `main` (codegen → typecheck → lint → tests). Without the optional
+`CONVEX_DEPLOY_KEY` repo secret, codegen is skipped and CI typechecks
+against the committed `_generated` types — the badge goes green on the very
+first run. To also sync the production backend on push, see
 `.github/workflows/deploy-convex.yml` for the one-time secret setup.
-
-Point the portfolio card and Vercel import at this repo. The old template
-scaffold repo (`lark-lilac-lagoon-bolt`) can be deleted once the card and
-deployment are switched over.
 
 Committed on purpose: `.env.example` (no values), `src/convex/_generated`
 (CI typechecks against it — see `.gitignore`), `vercel.json`, and both
