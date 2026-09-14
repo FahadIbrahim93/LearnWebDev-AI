@@ -146,7 +146,9 @@ export default function Dashboard() {
               </NbRouterLink>
             </div>
             <div className="mt-4 space-y-2">
-              {upcoming.length === 0 ? (
+              {bookings === undefined ? (
+                <p className="text-sm text-muted-foreground">Loading…</p>
+              ) : upcoming.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   No sessions booked yet. Pick any module and choose "book a
                   live session."
@@ -190,7 +192,16 @@ export default function Dashboard() {
               Free and paid modules, searchable.
             </p>
           </NbRouterLink>
-          {paidOrders.length === 0 ? (
+          {/* While the order query is in flight, stay neutral — flashing
+              "No purchases yet" at someone who owns three modules reads as
+              data loss. */}
+          {orders === undefined ? (
+            <NbBox className="bg-card p-5">
+              <p className="text-sm text-muted-foreground">
+                Loading your modules…
+              </p>
+            </NbBox>
+          ) : paidOrders.length === 0 ? (
             <>
               {/* Recommended next module — the natural next step after the free lesson */}
               {(() => {

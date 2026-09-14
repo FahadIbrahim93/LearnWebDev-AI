@@ -159,6 +159,20 @@ export default function CoursePlayer() {
   }
 
   // Access guard: free modules are open; paid modules require ownership.
+  // `undefined` from Convex means "still loading" (null means "no row"), so
+  // loading and locked each get their own screen — a non-owner must never
+  // see a flash of course content before the lock renders, and a direct
+  // visitor must never see a false "module not found" while the query runs.
+  if (lesson && !lesson.isFree && owned === undefined) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <NbSection className="py-20 text-center text-sm text-muted-foreground">
+          Loading…
+        </NbSection>
+      </div>
+    );
+  }
   if (lesson && !lesson.isFree && owned === false) {
     return (
       <div className="min-h-screen bg-background">
@@ -186,12 +200,24 @@ export default function CoursePlayer() {
     );
   }
 
-  if (!lesson) {
+  if (lesson === null) {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
         <NbSection className="py-20 text-center text-sm text-muted-foreground">
           Module not found.
+        </NbSection>
+      </div>
+    );
+  }
+
+  // Lesson row still resolving (content lookup below needs it loaded).
+  if (!lesson) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <NbSection className="py-20 text-center text-sm text-muted-foreground">
+          Loading…
         </NbSection>
       </div>
     );

@@ -46,6 +46,20 @@ export default function Certificate() {
     );
   }
 
+  // Signed-in learner whose progress query is still resolving: hold the
+  // loading screen. Deciding "not earned" before the data arrives would
+  // flash "Finish the lesson first" at someone who already finished.
+  if (user && progress === undefined) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <NbSection className="py-20 text-center text-sm text-muted-foreground">
+          Checking your progress…
+        </NbSection>
+      </div>
+    );
+  }
+
   if (!learnerName) {
     return <Navigate to="/auth?returnTo=%2Fcertificate" replace />;
   }

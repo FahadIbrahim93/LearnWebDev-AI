@@ -100,6 +100,27 @@ export default function Book() {
     );
   }
 
+  // Unknown slug: Convex returns null once resolved. Show an honest
+  // not-found screen instead of a header stuck on "Loading…" forever.
+  if (lesson === null) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader active="/catalog" />
+        <NbSection className="py-20">
+          <NbBox className="nb-shadow-lg mx-auto max-w-md bg-card p-8 text-center">
+            <p className="font-bold uppercase">Module not found</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              It may have been renamed or unpublished.
+            </p>
+            <NbRouterLink to="/catalog" variant="accent" className="mt-4">
+              Browse the catalog
+            </NbRouterLink>
+          </NbBox>
+        </NbSection>
+      </div>
+    );
+  }
+
   if (booked) {
     return (
       <div className="min-h-screen bg-background">

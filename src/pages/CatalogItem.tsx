@@ -112,7 +112,17 @@ export default function CatalogItem() {
           ← Back to catalog
         </Link>
 
-        {!lesson ? (
+        {lesson === null ? (
+          <NbBox className="mt-8 bg-card p-8 text-center">
+            <p className="font-bold uppercase">Module not found</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              It may have been renamed or unpublished.
+            </p>
+            <NbRouterLink to="/catalog" variant="accent" className="mt-4">
+              Browse the catalog
+            </NbRouterLink>
+          </NbBox>
+        ) : !lesson ? (
           <p className="mt-8 text-sm text-muted-foreground">Loading…</p>
         ) : (
           <div className="mt-6 grid gap-8 lg:grid-cols-[1.5fr_1fr]">
