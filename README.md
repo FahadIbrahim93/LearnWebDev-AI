@@ -93,7 +93,9 @@ contrast, and a full dark developer-facing mode.
 
 A deep-dive version of this section — including the request flow for a
 learner, backend access-control model, and the testing strategy — lives in
-[`ARCHITECTURE.md`](ARCHITECTURE.md).
+[`ARCHITECTURE.md`](ARCHITECTURE.md). A dated, honest code-quality review
+with per-aspect ratings and the issues fixed in each pass lives in
+[`docs/AUDIT.md`](docs/AUDIT.md).
 
 ```
 src/

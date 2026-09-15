@@ -73,17 +73,6 @@ export const listAllLessons = query({
   },
 });
 
-/** Waitlist with signup dates (admin only). */
-export const listWaitlist = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    const me = userId ? await ctx.db.get(userId) : null;
-    if (!me?.isAdmin) return [];
-    return await ctx.db.query("waitlist").collect();
-  },
-});
-
 export const moderatePost = mutation({
   args: { postId: v.id("showcase"), approve: v.boolean() },
   handler: async (ctx, args) => {

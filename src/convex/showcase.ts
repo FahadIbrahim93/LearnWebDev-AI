@@ -17,13 +17,6 @@ export const listApproved = query({
   },
 });
 
-export const getPost = query({
-  args: { id: v.id("showcase") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
-  },
-});
-
 export const listComments = query({
   args: { postId: v.id("showcase") },
   handler: async (ctx, args) => {
