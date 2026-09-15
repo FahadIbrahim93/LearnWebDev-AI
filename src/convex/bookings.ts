@@ -3,17 +3,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { enforceRateLimit, userRateLimitKey } from "./rateLimit";
-import { isValidBookingDate, isBookableSlot } from "../lib/courseRules";
-
-/** Server-side pretty date (timezone-optional) for email copy. */
-function prettyDate(iso: string, timeZone?: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    timeZone,
-  });
-}
+import { isValidBookingDate, isBookableSlot, prettyBookingDate } from "../lib/courseRules";
 
 export const listMyBookings = query({
   args: {},
@@ -134,12 +124,12 @@ export const createBooking = mutation({
       .withIndex("by_slug", (q) => q.eq("slug", args.lessonSlug))
       .unique();
     await ctx.scheduler.runAfter(0, internal.emails.notifyOwner, {
-      subject: `New session booking — ${prettyDate(args.date, args.timezone)} ${args.time}`,
+      subject: `New session booking — ${prettyBookingDate(args.date, args.time, args.timezone)} ${args.time}`,
       text: [
         `New 1:1 booking:`,
         ``,
         `Module: ${lesson?.title ?? args.lessonSlug}`,
-        `When: ${prettyDate(args.date, args.timezone)} at ${args.time}${args.timezone ? ` (${args.timezone})` : ""}`,
+        `When: ${prettyBookingDate(args.date, args.time, args.timezone)} at ${args.time}${args.timezone ? ` (${args.timezone})` : ""}`,
         args.note ? `Note: "${args.note}"` : ``,
         ``,
         `Manage it in the admin area → Sessions tab.`,
@@ -161,13 +151,27 @@ export const cancelBooking = mutation({
     await ctx.db.patch(args.bookingId, { status: "cancelled" });
 
     // Free the slot again: drop its lock so someone else can book it.
+    // Only release if no OTHER confirmed booking still holds this slot —
+    // without this check, cancelling a rebooked session would leave the
+    // second booking's slot bookable while its row says "confirmed".
     const lock = await ctx.db
       .query("bookingLocks")
       .withIndex("by_date_time", (q) =>
         q.eq("date", booking.date).eq("time", booking.time),
       )
       .unique();
-    if (lock) await ctx.db.delete(lock._id);
+    if (!lock) return;
+    const otherConfirmed = await ctx.db
+      .query("bookings")
+      .withIndex("by_date", (q) => q.eq("date", booking.date))
+      .collect();
+    const stillHeld = otherConfirmed.some(
+      (b) =>
+        b._id !== args.bookingId &&
+        b.time === booking.time &&
+        b.status === "confirmed",
+    );
+    if (!stillHeld) await ctx.db.delete(lock._id);
   },
 });
 
@@ -183,9 +187,12 @@ export const sendBookingConfirmation = internalMutation({
     const user = await ctx.db.get(booking.userId);
     const email = user?.email;
     if (!email) return;
-    const pretty = new Date(booking.date + "T00:00:00").toLocaleDateString(
-      "en-US",
-      { weekday: "long", month: "long", day: "numeric", timeZone: booking.timezone || undefined },
+    // Wall-clock date+time in the student's zone — never re-anchor through
+    // the server's local zone or the printed day can shift by one.
+    const pretty = prettyBookingDate(
+      booking.date,
+      booking.time,
+      booking.timezone || undefined,
     );
     await ctx.scheduler.runAfter(0, internal.emails.sendEmail, {
       to: email,

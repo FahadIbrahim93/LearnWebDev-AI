@@ -157,7 +157,15 @@ export const publishLesson = mutation({
   },
 });
 
-/** Owner updates a booking's status (cancel a session, mark it completed). */
+/**
+ * Owner updates a booking's status (cancel a session, mark it completed).
+ * The slot lock stays in sync with the booking row, mirroring the
+ * student-side cancelBooking:
+ * - cancelling releases the lock ONLY if no other confirmed booking still
+ *   holds the slot (a rebooked session must keep it locked);
+ * - re-confirming re-claims the lock, refusing when another confirmed
+ *   booking already holds the slot so the owner can't create a double-booking.
+ */
 export const updateBookingStatus = mutation({
   args: {
     bookingId: v.id("bookings"),
@@ -167,6 +175,50 @@ export const updateBookingStatus = mutation({
     const userId = await getAuthUserId(ctx);
     const me = userId ? await ctx.db.get(userId) : null;
     if (!me?.isAdmin) throw new Error("Admins only.");
+    const booking = await ctx.db.get(args.bookingId);
+    if (!booking) throw new Error("Booking not found.");
+    if (booking.status === args.status) return;
     await ctx.db.patch(args.bookingId, { status: args.status });
+
+    const lock = await ctx.db
+      .query("bookingLocks")
+      .withIndex("by_date_time", (q) =>
+        q.eq("date", booking.date).eq("time", booking.time),
+      )
+      .unique();
+    if (args.status === "cancelled") {
+      if (!lock) return;
+      const sameDay = await ctx.db
+        .query("bookings")
+        .withIndex("by_date", (q) => q.eq("date", booking.date))
+        .collect();
+      const stillHeld = sameDay.some(
+        (b) =>
+          b._id !== args.bookingId &&
+          b.time === booking.time &&
+          b.status === "confirmed",
+      );
+      if (!stillHeld) await ctx.db.delete(lock._id);
+    } else if (!lock) {
+      const sameDay = await ctx.db
+        .query("bookings")
+        .withIndex("by_date", (q) => q.eq("date", booking.date))
+        .collect();
+      const taken = sameDay.some(
+        (b) =>
+          b._id !== args.bookingId &&
+          b.time === booking.time &&
+          b.status === "confirmed",
+      );
+      if (taken) {
+        throw new Error(
+          "Cannot confirm: another confirmed booking already holds that slot.",
+        );
+      }
+      await ctx.db.insert("bookingLocks", {
+        date: booking.date,
+        time: booking.time,
+      });
+    }
   },
 });

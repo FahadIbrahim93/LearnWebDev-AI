@@ -79,6 +79,30 @@ export function isBookableSlot(time: string): time is BookableSlot {
   return (BOOKING_SLOTS as readonly string[]).includes(time);
 }
 
+/**
+ * Human label ("Thursday, March 5") for a booking's date + time.
+ *
+ * The stored `date`/`time` are wall-clock values in the student's timezone,
+ * so the string is parsed as UTC-anchored and formatted with an explicit
+ * zone (the student's, or UTC when unknown). Parsing naively with the
+ * server's local zone and then formatting in another zone can shift the
+ * printed date a full day (e.g. 2026-03-05T00:00 server-local formatted for
+ * America/New_York renders as March 4) — confirmation emails would disagree
+ * with what the student actually picked.
+ */
+export function prettyBookingDate(
+  date: string,
+  time: string,
+  timeZone?: string,
+): string {
+  return new Date(`${date}T${time}:00Z`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: timeZone || "UTC",
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Validation helpers                                                  */
 /* ------------------------------------------------------------------ */

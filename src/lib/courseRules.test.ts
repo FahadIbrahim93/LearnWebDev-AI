@@ -17,6 +17,7 @@ import {
   isValidBookingDate,
   isValidEmail,
   modulePercent,
+  prettyBookingDate,
 } from "./courseRules";
 
 /* ------------------------------------------------------------------ */
@@ -150,6 +151,51 @@ describe("isBookableSlot", () => {
     expect(isBookableSlot("12:00")).toBe(false);
     expect(isBookableSlot("")).toBe(false);
     expect(isBookableSlot("24:00")).toBe(false);
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* prettyBookingDate                                                   */
+/* ------------------------------------------------------------------ */
+
+describe("prettyBookingDate", () => {
+  it("formats the wall-clock date the student picked (UTC anchor)", () => {
+    // 2026-03-05 is a Thursday; parsing is UTC-anchored so the label can
+    // never drift when the formatting machine sits in another timezone.
+    expect(prettyBookingDate("2026-03-05", "09:00")).toBe(
+      "Thursday, March 5",
+    );
+  });
+
+  it("formats in the student's timezone when provided", () => {
+    expect(prettyBookingDate("2026-03-05", "09:00", "Europe/Berlin")).toBe(
+      "Thursday, March 5",
+    );
+    expect(prettyBookingDate("2026-03-05", "09:00", "America/New_York")).toBe(
+      "Thursday, March 5",
+    );
+  });
+
+  it("falls back to UTC for unknown/empty timezones", () => {
+    expect(prettyBookingDate("2026-03-05", "09:00", "")).toBe(
+      "Thursday, March 5",
+    );
+  });
+
+  it("does not shift the day across timezone formatting", () => {
+    // Regression: the old implementation parsed midnight in the server's
+    // local zone and formatted in the student's zone, which moved western
+    // timezones' labels a day earlier. Every zone must agree on the day.
+    for (const tz of [
+      undefined,
+      "UTC",
+      "America/Los_Angeles",
+      "Asia/Tokyo",
+    ]) {
+      expect(prettyBookingDate("2026-03-05", "09:00", tz)).toContain(
+        "March 5",
+      );
+    }
   });
 });
 
