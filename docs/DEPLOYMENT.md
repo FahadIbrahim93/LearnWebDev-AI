@@ -61,13 +61,16 @@ For a deployed check, confirm:
 
 ```bash
 curl -I https://fahadibrahim93.github.io/LearnWebDev-AI/
-curl -I https://fahadibrahim93.github.io/LearnWebDev-AI/lesson
+curl https://fahadibrahim93.github.io/LearnWebDev-AI/lesson
 ```
 
-Both should return HTTP 200. In a browser, verify the landing hero, the free
-lesson link, a direct deep link, and that JavaScript/CSS requests start with
-`/LearnWebDev-AI/`. If Convex is configured, also verify sign-in and one
-read-only catalog request.
+The root should return HTTP 200 and contain the app shell. A direct deep link
+should contain the same app shell through `404.html`; GitHub Pages may retain
+an HTTP 404 status for that fallback document even though the browser loads
+the SPA and React Router resolves the route. In a browser, verify the landing
+hero, the free lesson link, a direct deep link, and that JavaScript/CSS
+requests start with `/LearnWebDev-AI/`. If Convex is configured, also verify
+sign-in and one read-only catalog request.
 
 ### Rollback
 
