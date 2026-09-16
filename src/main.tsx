@@ -87,7 +87,38 @@ class RootErrorBoundary extends React.Component<
   }
 }
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+function DemoMode() {
+  const base = import.meta.env.BASE_URL;
+
+  return (
+    <main className="min-h-screen bg-background px-6 py-16 text-foreground">
+      <div className="mx-auto max-w-3xl">
+        <p className="font-mono text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          Web Development × AI
+        </p>
+        <h1 className="mt-4 text-4xl font-bold uppercase tracking-tight sm:text-6xl">
+          Build a website you&apos;re proud of.
+        </h1>
+        <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          The static demo is live. Connect a Convex deployment to enable
+          accounts, saved progress, the catalog, bookings, and the waitlist.
+        </p>
+        <a
+          className="nb-border nb-press mt-8 inline-block bg-accent px-5 py-3 font-bold uppercase tracking-wide text-accent-foreground"
+          href={`${base}lesson`}
+        >
+          Open the free lesson
+        </a>
+        <p className="mt-6 font-mono text-xs text-muted-foreground">
+          Demo mode is active because VITE_CONVEX_URL is not configured.
+        </p>
+      </div>
+    </main>
+  );
+}
+
+const convexUrl = import.meta.env.VITE_CONVEX_URL;
+const convex = convexUrl ? new ConvexReactClient(convexUrl) : null;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -97,49 +128,54 @@ createRoot(document.getElementById("root")!).render(
           <VlyToolbar />
         </Suspense>
       </ToolbarErrorBoundary>
-      <ConvexAuthProvider client={convex}>
-        <BrowserRouter>
-          <RouteSyncer />
-          <Suspense fallback={<RouteLoading />}>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route
-                path="/auth"
-                element={<AuthPage redirectAfterAuth="/dashboard" />}
-              />
-              <Route
-                path="/lesson"
-                element={<Lesson />}
-              />
-              <Route path="/catalog" element={<Catalog />} />
-              <Route path="/catalog/:slug" element={<CatalogItem />} />
-              <Route path="/book/:slug" element={<Book />} />
-              <Route path="/learn/:slug" element={<CoursePlayer />} />
-              <Route path="/showcase" element={<Showcase />} />
-              <Route path="/certificate" element={<Certificate />} />
-              <Route path="/certificate/:name" element={<Certificate />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <RequireAuth>
-                    <Dashboard />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <RequireAuth>
-                    <Admin />
-                  </RequireAuth>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+      {convex ? (
+        <ConvexAuthProvider client={convex}>
+          <BrowserRouter basename={import.meta.env.BASE_URL}>
+            <RouteSyncer />
+            <Suspense fallback={<RouteLoading />}>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route
+                  path="/auth"
+                  element={<AuthPage redirectAfterAuth="/dashboard" />}
+                />
+                <Route path="/lesson" element={<Lesson />} />
+                <Route path="/catalog" element={<Catalog />} />
+                <Route path="/catalog/:slug" element={<CatalogItem />} />
+                <Route path="/book/:slug" element={<Book />} />
+                <Route path="/learn/:slug" element={<CoursePlayer />} />
+                <Route path="/showcase" element={<Showcase />} />
+                <Route path="/certificate" element={<Certificate />} />
+                <Route path="/certificate/:name" element={<Certificate />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <RequireAuth>
+                      <Dashboard />
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <RequireAuth>
+                      <Admin />
+                    </RequireAuth>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+          <Toaster />
+        </ConvexAuthProvider>
+      ) : (
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <Routes>
+            <Route path="*" element={<DemoMode />} />
+          </Routes>
         </BrowserRouter>
-        <Toaster />
-      </ConvexAuthProvider>
+      )}
     </RootErrorBoundary>
   </StrictMode>,
 );
