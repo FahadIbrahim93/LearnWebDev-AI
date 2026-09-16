@@ -26,7 +26,7 @@ jobs:
       VITE_BASE_PATH: /LearnWebDev-AI/
       # The URL is public runtime configuration. A variable is preferred, but
       # accepting a secret keeps existing repository conventions compatible.
-      VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL || secrets.VITE_CONVEX_URL }}
+      VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
       VITE_CONVEX_SITE_URL: ${{ vars.VITE_CONVEX_SITE_URL }}
       VITE_VLY_APP_ID: ${{ vars.VITE_VLY_APP_ID }}
       VITE_VLY_MONITORING_URL: ${{ vars.VITE_VLY_MONITORING_URL }}
@@ -41,6 +41,11 @@ jobs:
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Verify public frontend configuration
+        run: |
+          test -n "$VITE_CONVEX_URL"
+          echo "VITE_CONVEX_URL is configured for the Pages build"
 
       - name: Build static app
         run: bun run build
