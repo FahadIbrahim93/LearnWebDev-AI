@@ -6,6 +6,10 @@ import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
+  // GitHub Pages serves this repository below /LearnWebDev-AI/. Keep local
+  // development at the root while allowing CI to provide the production
+  // subpath explicitly.
+  base: process.env.VITE_BASE_PATH || "/",
   plugins: [react(), vlyPlugin(), tailwindcss()],
   resolve: {
     alias: {

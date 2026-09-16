@@ -161,6 +161,17 @@ bun tsc -b --noEmit     # typecheck
 The platform runs the dev server automatically; never run `bun run dev`
 manually in this environment.
 
+## Deploying the public demo
+
+GitHub Pages deploys the app from `main` at
+<https://fahadibrahim93.github.io/LearnWebDev-AI/>. The deployment workflow
+uses the repository subpath automatically and includes an SPA fallback for
+deep links. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the required
+Pages setting, optional `VITE_CONVEX_URL` variable, validation checks,
+backend limitations, and rollback procedure. Without that public Convex URL,
+the site intentionally falls back to a static demo instead of failing to
+load.
+
 ## Going live with payments
 1. Create a Stripe account and grab your keys.
 2. Add these env vars via the project's Keys/API keys UI:
