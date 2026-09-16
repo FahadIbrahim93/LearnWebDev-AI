@@ -27,6 +27,9 @@ jobs:
       # The URL is public runtime configuration. A variable is preferred, but
       # accepting a secret keeps existing repository conventions compatible.
       VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL || secrets.VITE_CONVEX_URL }}
+      VITE_CONVEX_SITE_URL: ${{ vars.VITE_CONVEX_SITE_URL }}
+      VITE_VLY_APP_ID: ${{ vars.VITE_VLY_APP_ID }}
+      VITE_VLY_MONITORING_URL: ${{ vars.VITE_VLY_MONITORING_URL }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
