@@ -24,7 +24,9 @@ jobs:
     timeout-minutes: 10
     env:
       VITE_BASE_PATH: /LearnWebDev-AI/
-      VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+      # The URL is public runtime configuration. A variable is preferred, but
+      # accepting a secret keeps existing repository conventions compatible.
+      VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL || secrets.VITE_CONVEX_URL }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

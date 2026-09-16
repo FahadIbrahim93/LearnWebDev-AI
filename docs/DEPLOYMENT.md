@@ -30,9 +30,34 @@ update the Pages setting and the canonical URL in this document.
 ### Configuration and demo mode
 
 `VITE_CONVEX_URL` is read from the repository Actions variable of the same
-name. It is a public deployment URL, not a secret. Set it to the production
-Convex deployment URL to enable authentication, saved progress, catalog data,
+name (or the same-named Actions secret as a compatibility fallback). It is a
+public deployment URL, not a secret. Set it to the production Convex
+deployment URL to enable authentication, saved progress, catalog data,
 bookings, showcase data, waitlist storage, and server-backed GitHub stats.
+
+### Current production blocker
+
+The repository currently has no Convex production URL or deploy key. Running
+the CLI from this checkout only creates an anonymous local deployment at
+`http://127.0.0.1:3210`; that URL cannot be used by GitHub Pages. The CLI also
+reports that the Convex account is not linked and that
+`VLY_CONVEX_AUTH_ISSUER` is missing.
+
+One-time owner action:
+
+1. Sign in to <https://dashboard.convex.dev> and create/select the production
+   Convex project for this repository.
+2. Configure `VLY_CONVEX_AUTH_ISSUER` and any other required Convex auth
+   environment values in that production deployment.
+3. Create a production deploy key in the Convex dashboard.
+4. Add `CONVEX_DEPLOY_KEY` as a repository Actions secret and add the
+   deployment's public client URL as the `VITE_CONVEX_URL` repository Actions
+   variable.
+5. Run **Deploy Convex (prod)**, then **Deploy app to GitHub Pages**.
+
+Until those actions are completed, Pages intentionally renders a professional
+static demo rather than pretending that accounts, catalog data, or mutations
+work. The full React app can only be verified after the public URL is set.
 
 When that variable is absent, the build still succeeds and the deployed
 landing experience renders an explicit static demo page. No Stripe,
