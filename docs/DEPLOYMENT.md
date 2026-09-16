@@ -31,33 +31,35 @@ update the Pages setting and the canonical URL in this document.
 
 `VITE_CONVEX_URL` is read from the repository Actions variable of the same
 name (or the same-named Actions secret as a compatibility fallback). It is a
-public deployment URL, not a secret. Set it to the production Convex
-deployment URL to enable authentication, saved progress, catalog data,
-bookings, showcase data, waitlist storage, and server-backed GitHub stats.
+public deployment URL, not a secret. The Pages workflow also injects the
+public `VITE_CONVEX_SITE_URL`, `VITE_VLY_APP_ID`, and
+`VITE_VLY_MONITORING_URL` variables when present. Set these to the values for
+the intended Convex/Vly deployment to enable authentication, saved progress,
+catalog data, bookings, showcase data, waitlist storage, and server-backed
+GitHub stats.
 
 ### Current production blocker
 
-The repository currently has no Convex production URL or deploy key. Running
-the CLI from this checkout only creates an anonymous local deployment at
-`http://127.0.0.1:3210`; that URL cannot be used by GitHub Pages. The CLI also
-reports that the Convex account is not linked and that
-`VLY_CONVEX_AUTH_ISSUER` is missing.
+The supplied Vly values point to the Convex development deployment
+`dev:acrobatic-gull-252`, not a production deployment. This is sufficient for
+frontend connectivity and testing, but it is not an appropriate production
+data boundary. A production Convex project/deploy key and its auth issuer
+should replace it before real users or payments rely on the site.
 
 One-time owner action:
 
-1. Sign in to <https://dashboard.convex.dev> and create/select the production
-   Convex project for this repository.
+1. Sign in to <https://dashboard.convex.dev> and create/select a production
+   Convex project.
 2. Configure `VLY_CONVEX_AUTH_ISSUER` and any other required Convex auth
    environment values in that production deployment.
-3. Create a production deploy key in the Convex dashboard.
-4. Add `CONVEX_DEPLOY_KEY` as a repository Actions secret and add the
-   deployment's public client URL as the `VITE_CONVEX_URL` repository Actions
-   variable.
-5. Run **Deploy Convex (prod)**, then **Deploy app to GitHub Pages**.
+3. Create a production deploy key and add it as `CONVEX_DEPLOY_KEY`.
+4. Replace the five public Actions variables with the production deployment
+   values, then run **Deploy Convex (prod)** and **Deploy app to GitHub Pages**.
 
-Until those actions are completed, Pages intentionally renders a professional
-static demo rather than pretending that accounts, catalog data, or mutations
-work. The full React app can only be verified after the public URL is set.
+Pages now receives the supplied development URL, so it renders the full
+Convex-backed React app rather than the static fallback. Stripe and Resend
+still require their server-only Convex environment secrets before payments or
+transactional email are live.
 
 When that variable is absent, the build still succeeds and the deployed
 landing experience renders an explicit static demo page. No Stripe,
